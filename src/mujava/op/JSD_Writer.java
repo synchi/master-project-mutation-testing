@@ -15,9 +15,12 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.ptree.FieldDeclaration;
+import openjava.ptree.ModifierList;
+import openjava.ptree.ParseTreeException;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log JSD mutants to files</p>

@@ -16,9 +16,15 @@
 
 package mujava.op;
 
-import java.io.*;
-import openjava.mop.*;
+import mujava.cli.Util;
+import openjava.mop.Environment;
+import openjava.mop.FileEnvironment;
+import openjava.mop.OJClass;
+import openjava.mop.OJMethod;
 import openjava.ptree.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * <p>Generate EOA (Java-specific reference assignment and content assignment replacement) mutants --
@@ -102,7 +108,7 @@ public class EOA extends mujava.op.util.Mutator
 	     out.flush();  
 	     out.close();
       } catch ( IOException e ) {
-	     System.err.println( "fails to create " + f_name );
+	     if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 	     System.err.println( "errors during printing " + f_name );
 	     e.printStackTrace();
@@ -183,7 +189,7 @@ public class EOA extends mujava.op.util.Mutator
 		 out.flush();  
 		 out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();
@@ -214,7 +220,7 @@ public class EOA extends mujava.op.util.Mutator
 		 out.flush();  
 		 out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();

@@ -16,8 +16,14 @@
 package mujava.op.basic;
 
 import mujava.op.util.TraditionalMutantCodeWriter;
-import openjava.ptree.*;
-import java.io.*;
+import openjava.ptree.BinaryExpression;
+import openjava.ptree.FieldAccess;
+import openjava.ptree.ParseTreeException;
+import openjava.ptree.Variable;
+
+import java.io.PrintWriter;
+
+
 
 /**
  * <p>Output and log COI mutants to files </p>

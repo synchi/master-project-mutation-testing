@@ -15,7 +15,8 @@
  */ 
 package mujava.op;
 
-import openjava.mop.*;
+import openjava.mop.FileEnvironment;
+import openjava.mop.OJClass;
 import openjava.ptree.*;
 /**
  * <p>Description: </p>

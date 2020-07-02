@@ -25,39 +25,28 @@
 
 package mujava.cli;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 import mujava.MutationSystem;
 import mujava.OpenJavaException;
-import mujava.TraditionalMutantsGenerator;
 import mujava.TraditionalMutantsGeneratorCLI;
 
 import com.beust.jcommander.JCommander;
+
+import static mujava.cli.Util.logDuration;
+import static mujava.cli.Util.logTime;
+import static mujava.cli.Util.timed;
 
 public class genmutes {
 	// static String sessionName = new String();
 	static String muJavaHomePath = new String();
 
 	public static void main(String[] args) throws Exception {
+		Date start = new Date();
+
 		// System.out.println("test");
 		genmutesCom jct = new genmutesCom();
 		String[] argv = { "-sdl", "-debug", "cal" }; // development use, when release,
@@ -77,6 +66,12 @@ public class genmutes {
 		// check if debug mode
 		if (jct.isDebug()) {
 			Util.debug = true;
+		}
+
+		// (SARA)
+		if(jct.isTimed()) {
+			timed = true;
+			logTime(start, "start genmutes");
 		}
 
 		// get all existing session name
@@ -262,8 +257,10 @@ public class genmutes {
 		generateMutants(file_list, ops);
 
 		//System.exit(0);
-		
 
+		if (timed) {
+			logDuration("end genmutes", start);
+		}
 	}
 
 	private static void setJMutationStructureAndSession(String sessionName) {
@@ -288,7 +285,14 @@ public class genmutes {
 			// For example: org/apache/bcel/Class.java
 			File file = file_list[i];
 			try {
-				System.out.println((i + 1) + " : " + file.getName());
+				// (SARA)
+				String filename = file.getName();
+				Date start = new Date();
+				if (timed) {
+					logTime(start,"start file " + filename);
+				} else {
+					System.out.println((i + 1) + " : " + filename);
+				}
 				// [1] Examine if the target class is interface or abstract
 				// class
 				// In that case, we can't apply mutation testing.
@@ -316,29 +320,31 @@ public class genmutes {
 				int class_type = MutationSystem.getClassType(class_name);
 
 				if (class_type == MutationSystem.NORMAL) { // do nothing
-				} else if (class_type == MutationSystem.MAIN) {
+				} else if (class_type == MutationSystem.MAIN && !timed) {
 					System.out.println(" -- " + file.getName() + " class contains 'static void main()' method.");
 					System.out
 							.println("    Pleas note that mutants are not generated for the 'static void main()' method");
 				} else {
-					switch (class_type) {
-					case MutationSystem.INTERFACE:
-						System.out.println(" -- Can't apply because " + file.getName() + " is 'interface' ");
-						break;
-					case MutationSystem.ABSTRACT:
-						System.out.println(" -- Can't apply because " + file.getName() + " is 'abstract' class ");
-						break;
-					case MutationSystem.APPLET:
-						System.out.println(" -- Can't apply because " + file.getName() + " is 'applet' class ");
-						break;
-					case MutationSystem.GUI:
-						System.out.println(" -- Can't apply because " + file.getName() + " is 'GUI' class ");
-						break;
-					case -1:
-						System.out.println(" -- Can't apply because class not found ");
-						break;
+					if (!timed) {
+						switch (class_type) {
+							case MutationSystem.INTERFACE:
+								System.out.println(" -- Can't apply because " + file.getName() + " is 'interface' ");
+								break;
+							case MutationSystem.ABSTRACT:
+								System.out
+										.println(" -- Can't apply because " + file.getName() + " is 'abstract' class ");
+								break;
+							case MutationSystem.APPLET:
+								System.out.println(" -- Can't apply because " + file.getName() + " is 'applet' class ");
+								break;
+							case MutationSystem.GUI:
+								System.out.println(" -- Can't apply because " + file.getName() + " is 'GUI' class ");
+								break;
+							case -1:
+								System.out.println(" -- Can't apply because class not found ");
+								break;
+						}
 					}
-
 					deleteDirectory();
 					continue;
 				}
@@ -383,27 +389,35 @@ public class genmutes {
 //		         {
 //		        	 line++;
 //		         }
-				
-			      System.out
-					.println("------------------------------------------------------------------");
-			      System.out.println("Total mutants gnerated for " + file.getName() +": " + Integer.toString(total_mutants));
+				if (timed) {
+					logDuration("end file " + filename, start);
+				} else {
+					System.out
+							.println("------------------------------------------------------------------");
+					System.out.println(
+							"Total mutants generated for " + filename + ": " + Integer.toString(total_mutants));
+				}
 
-		      
-			      
 			} catch (OpenJavaException oje) {
-				System.out.println("[OJException] " + file.getName() + " " + oje.toString());
+				if (!timed) {
+					System.out.println("[OJException] " + file.getName() + " " + oje.toString());
+				}
 				// System.out.println("Can't generate mutants for " +file_name +
 				// " because OpenJava " + oje.getMessage());
 				deleteDirectory();
 			} catch (Exception exp) {
-				System.out.println("[Exception] " + file.getName() + " " + exp.toString());
-				exp.printStackTrace();
+				if (!timed) {
+					System.out.println("[Exception] " + file.getName() + " " + exp.toString());
+					exp.printStackTrace();
+				}
 				// System.out.println("Can't generate mutants for " +file_name +
 				// " due to exception" + exp.getClass().getName());
 				// exp.printStackTrace();
 				deleteDirectory();
 			} catch (Error er) {
-				System.out.println("[Error] " + file.getName() + " " + er.toString());
+				if (!timed) {
+					System.out.println("[Error] " + file.getName() + " " + er.toString());
+				}
 				// System.out.println("Can't generate mutants for " +file_name +
 				// " due to error" + er.getClass().getName());
 				deleteDirectory();
@@ -420,12 +434,7 @@ public class genmutes {
 		
 		
 	}
-	
-	
-	
-	
-	
-	
+
 
 	static void deleteDirectory() {
 		File originalDir = new File(MutationSystem.MUTANT_HOME + "/" + MutationSystem.DIR_NAME + "/"
@@ -483,7 +492,9 @@ public class genmutes {
 			MutationSystem.ORIGINAL_PATH = original_dir_path;
 			MutationSystem.DIR_NAME = temp;
 		} catch (Exception e) {
-			System.err.println(e);
+			if (!timed) {
+				System.err.println(e);
+			}
 		}
 		
 		

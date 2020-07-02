@@ -18,7 +18,9 @@ package mujava.op.basic;
 import mujava.op.util.TraditionalMutantCodeWriter;
 import openjava.ptree.*;
 
-import java.io.*;
+import java.io.PrintWriter;
+
+
 
 /**
  * <p>Output and log SDL mutants to files </p>

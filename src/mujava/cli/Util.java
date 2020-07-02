@@ -20,11 +20,13 @@ package mujava.cli;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import org.apache.commons.io.IOUtils;
+
+import static java.util.TimeZone.*;
+
 /**
  * <p>
  * Description: Uitility class for command line version
@@ -38,6 +40,7 @@ public class Util
 {
 	public static int Total = 0;
 	public static boolean debug = false;
+	public static boolean timed = false;
 	
     //all mutants in a class  	
 	public static Vector mutants = new Vector();
@@ -121,7 +124,31 @@ public class Util
 
 		return path;
 	}
-	
-	
-	
+
+
+	// (SARA)
+	public static void logTime(Date time, String label)
+	{
+		logTime(time, label, "...");
+	}
+
+	public static void logTime(Date time, String label, String duration)
+	{
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+		sdf.setTimeZone(getTimeZone("GMT"));
+
+		System.out.println(sdf.format(time) + ", " + label + ", " + duration);
+	}
+
+	public static void logDuration(String label, Date start)
+	{
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+		sdf.setTimeZone(getTimeZone("GMT"));
+
+		Date now = new Date();
+
+		long diff = now.getTime() - start.getTime();
+		logTime(now, label, sdf.format(diff));
+	}
+
 }

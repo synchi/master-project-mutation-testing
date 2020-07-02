@@ -23,8 +23,9 @@
 
 package mujava.op.util;
 
-import java.io.*;
 import mujava.MutationSystem;
+
+import java.io.PrintWriter;
 
 
 public class TraditionalMutantCodeWriter extends MutantCodeWriter{

@@ -15,10 +15,18 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.mop.*;
-import openjava.ptree.*;
+import mujava.cli.Util;
 import mujava.op.util.DeclAnalyzer;
+import openjava.mop.CannotAlterException;
+import openjava.mop.OJClass;
+import openjava.mop.OJClassNotFoundException;
+import openjava.mop.OJMethod;
+import openjava.ptree.CompilationUnit;
+import openjava.ptree.MethodDeclaration;
+import openjava.ptree.ParseTreeException;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * <p>Generate OMD (Overloading method deletion) mutants --
@@ -234,7 +242,7 @@ public class OMD extends DeclAnalyzer
          out.close();
       } catch ( IOException e ) 
       {
-	     System.err.println( "fails to create " + f_name );
+	     if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) 
       {
 	     System.err.println( "errors during printing " + f_name );

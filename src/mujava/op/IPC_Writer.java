@@ -15,9 +15,13 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.ptree.ConstructorInvocation;
+import openjava.ptree.Expression;
+import openjava.ptree.ExpressionList;
+import openjava.ptree.ParseTreeException;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log IPC mutants to files</p>

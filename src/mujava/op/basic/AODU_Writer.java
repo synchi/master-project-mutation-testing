@@ -16,8 +16,12 @@
 package mujava.op.basic;
 
 import mujava.op.util.TraditionalMutantCodeWriter;
-import openjava.ptree.*;
-import java.io.*;
+import openjava.ptree.ParseTreeException;
+import openjava.ptree.UnaryExpression;
+
+import java.io.PrintWriter;
+
+
 
 /**
  * <p>Output and log AODU mutants to files </p>

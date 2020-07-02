@@ -15,10 +15,11 @@
  */ 
 package mujava.op.util;
 
-import java.io.*;
-import java.util.Enumeration;
 import openjava.ptree.*;
 import openjava.ptree.util.ParseTreeVisitor;
+
+import java.io.PrintWriter;
+import java.util.Enumeration;
 
 /**
  * <p>Description: </p>

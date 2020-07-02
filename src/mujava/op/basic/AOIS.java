@@ -16,9 +16,14 @@
 package mujava.op.basic;
 
 
-import openjava.mop.*;
+import mujava.cli.Util;
+import openjava.mop.FileEnvironment;
 import openjava.ptree.*;
-import java.io.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+
 
 /**
  * <p>Generate AOIS (Arithmetic Operator Insertion (Short-cut)) mutants --
@@ -120,7 +125,7 @@ public class AOIS extends Arithmetic_OP
 		 comp_unit.accept( writer );
 		 out.flush();  out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();
@@ -152,7 +157,7 @@ public class AOIS extends Arithmetic_OP
 		 out.flush();  
 		 out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();

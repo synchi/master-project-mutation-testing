@@ -15,9 +15,15 @@
  */ 
 package mujava.op.basic;
 
-import openjava.mop.*;
+import mujava.cli.Util;
+import openjava.mop.FileEnvironment;
+import openjava.mop.OJSystem;
 import openjava.ptree.*;
-import java.io.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+
 
 /**
  * <p>Generate COR (Conditional Operator Replacement mutants --
@@ -112,7 +118,7 @@ public class COR extends MethodLevelMutator
 		 out.flush();  
 		 out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();

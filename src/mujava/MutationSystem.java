@@ -16,6 +16,7 @@
  
 package mujava;
 
+import mujava.cli.Util;
 import openjava.mop.OJSystem;
 import openjava.mop.OJClass;
 
@@ -502,16 +503,23 @@ public class MutationSystem extends OJSystem
             }
          } catch (ClassNotFoundException e)  
          {
-            System.err.println("[ERROR] Can't find the class: " + classes[i]);
-            System.err.println("Please check that the compiled class for the code you want to mutate is in the classes/ directory. Also check that the MuJava_HOME variable in mujava.config does not end with a trailing slash. " );
-		    bad[i] = true; 
+             if (!Util.timed) {
+                 System.err.println("[ERROR] Can't find the class: " + classes[i]);
+                 System.err.println(
+                         "Please check that the compiled class for the code you want to mutate is in the classes/ directory. Also check that the MuJava_HOME variable in mujava.config does not end with a trailing slash. ");
+             }
+             bad[i] = true;
 		    classInfo[i] = new InheritanceINFO(classes[i], "");
             Runtime.getRuntime().exit(0);
          } catch (Error er)
          {
-            // Sometimes error occurred. However, I can't solve..
-            // To muJava users: try do your best to solve it. ^^;
-            System.out.println ("[ERROR] for class " + classes[i] + " => "+ er.getMessage() );
+             if (!Util.timed)
+             {
+
+                 // Sometimes error occurred. However, I can't solve..
+                 // To muJava users: try do your best to solve it. ^^;
+                 System.out.println("[ERROR] for class " + classes[i] + " => " + er.getMessage());
+             }
 			bad[i] = true; 
 			classInfo[i] = new InheritanceINFO(classes[i], "");
          }
@@ -604,7 +612,9 @@ public class MutationSystem extends OJSystem
          e1.printStackTrace();
       } catch (Exception e)
       {
-         e.printStackTrace();
+          if (!Util.timed) {
+              e.printStackTrace();
+          }
       }
    }
 
@@ -643,7 +653,9 @@ public class MutationSystem extends OJSystem
          e1.printStackTrace();
       } catch (Exception e)
       {
-         e.printStackTrace();
+          if (!Util.timed) {
+              e.printStackTrace();
+          }
       }
    }
    

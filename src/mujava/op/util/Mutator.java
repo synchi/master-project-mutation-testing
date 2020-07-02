@@ -15,10 +15,17 @@
  */ 
 package mujava.op.util;
 
-import mujava.*;
-import java.io.*;
-import openjava.mop.*;
+import mujava.MutationSystem;
+import openjava.mop.Environment;
+import openjava.mop.FileEnvironment;
+import openjava.mop.OJClass;
+import openjava.mop.OJMethod;
 import openjava.ptree.*;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * <p>File Analyzer for generating mutants </p>

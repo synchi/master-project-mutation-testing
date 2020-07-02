@@ -16,8 +16,12 @@
 package mujava.op;
 
 import mujava.op.util.MutantCodeWriter;
-import openjava.ptree.*;
-import java.io.*;
+import openjava.ptree.MethodCall;
+import openjava.ptree.ParseTreeException;
+import openjava.ptree.UnaryExpression;
+import openjava.ptree.Variable;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log UOI mutants to files</p>

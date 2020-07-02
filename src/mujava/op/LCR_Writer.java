@@ -18,7 +18,7 @@ package mujava.op;
 import mujava.op.util.MutantCodeWriter;
 import openjava.ptree.*;
 
-import java.io.*;
+import java.io.PrintWriter;
 
 /**
  * <p>Description: </p>

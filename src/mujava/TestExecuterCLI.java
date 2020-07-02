@@ -20,18 +20,12 @@ package mujava;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Random;
 import java.util.Vector;
 
@@ -40,12 +34,13 @@ import mujava.cli.runmutes;
 import mujava.test.*;
 import mujava.util.*;
 
-import org.junit.*;
-import org.junit.internal.RealSystem;
 import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
-import org.junit.runners.*;
+
+import static mujava.cli.Util.logDuration;
+import static mujava.cli.Util.logTime;
+import static mujava.cli.Util.timed;
+
 /**
  * 
  * <p>
@@ -58,14 +53,12 @@ import org.junit.runners.*;
  */
 
 public class TestExecuterCLI extends TestExecuter {
-	
 //	int TIMEOUT = 3000;
 	public static ArrayList<String> methodList = new ArrayList<>();
 	public static ArrayList<String> methodList2 = new ArrayList<>();
 
 	public TestExecuterCLI(String targetClassName) {
 		super(targetClassName);
-
 	}
 
 
@@ -80,18 +73,24 @@ public class TestExecuterCLI extends TestExecuter {
 															// the test set
 															// class
 			if (original_obj == null) {
-				System.out.println("Can't instantiace original object");
+				if (!timed) {
+					System.out.println("Can't instantiace original object");
+				}
 				return false;
 			}
 
 			// read testcases from the test set class
 			testCases = original_executer.getDeclaredMethods();
 			if (testCases == null) {
-				System.out.println(" No test case exist ");
+				if (!timed) {
+					System.out.println(" No test case exist ");
+				}
 				return false;
 			}
 		} catch (Exception e) {
-			System.err.println(e);
+			if (!timed) {
+				System.err.println(e);
+			}
 			return false;
 		}
 		return true;
@@ -324,7 +323,9 @@ public class TestExecuterCLI extends TestExecuter {
 										mutantResults.put(nameOfTest,
 												nameOfTest + ": " + lineNumber + "; " + failure.getMessage());
 								}
-								System.out.print(".");
+								if (!timed) {
+									System.out.print(".");
+								}
 								Util.DebugPrint(mutantResults.toString());
 								mutantRunning = false;
 								synchronized (lockObject) {
@@ -332,7 +333,9 @@ public class TestExecuterCLI extends TestExecuter {
 								}
 
 							} catch (Exception e) {
-								e.printStackTrace();
+								if (!timed) {
+									e.printStackTrace();
+								}
 								// System.out.println("e.getMessage()");
 								// System.out.println(e.getMessage());
 							}
@@ -424,7 +427,9 @@ public class TestExecuterCLI extends TestExecuter {
 		 * catch(ClassNotFoundException e3){ System.err.println("[Execution 1] "
 		 * + e3); return null; }
 		 */catch (Exception e) {
-			System.err.println("[Exception 2]" + e);
+			if (!timed) {
+				System.err.println("[Exception 2]" + e);
+			}
 			return null;
 		}
 		Util.DebugPrint("\ntest report: " + finalTestResults);
@@ -452,7 +457,9 @@ public class TestExecuterCLI extends TestExecuter {
 
 			tr.outputToFile(methodSignature);
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (!timed) {
+				e.printStackTrace();
+			}
 		}
 
 		return tr;
@@ -476,8 +483,14 @@ public class TestExecuterCLI extends TestExecuter {
 				FileReader r = new FileReader(f);
 				BufferedReader reader = new BufferedReader(r);
 				String readSignature = reader.readLine();
-				while (readSignature != null) {   // for each method
-					System.out.println("For method: "+readSignature);
+				while (readSignature != null) {// for each method
+					Date start = new Date();
+					if (timed) {
+						logTime(start, "start mutants " + readSignature);
+					}
+					else {
+						System.out.println("For method: " + readSignature);
+					}
 					MutationSystem.MUTANT_PATH = original_mutant_path + "/" + readSignature;  // set the path to that method
 					try {
 						test_result = new TestResultCLI();
@@ -485,11 +498,16 @@ public class TestExecuterCLI extends TestExecuter {
 						runMutants(test_result, readSignature, mutantTypes, percentage);
 					} catch (NoMutantException e) {
 					}
+					if (timed) {
+						logDuration("end mutants " + readSignature, start);
+					}
 					readSignature = reader.readLine();
 				}
 				reader.close();
 			} catch (Exception e) {
-				System.err.println(e.getMessage());
+				if (!timed) {
+					System.err.println(e.getMessage());
+				}
 			}
 		} else {
 			MutationSystem.MUTANT_PATH = original_mutant_path + "/" + methodSignature;
@@ -518,7 +536,9 @@ public class TestExecuterCLI extends TestExecuter {
 				}
 			}
 
-			Util.Print("\nCurrent running mode: " + runmutes.mode);
+			if (!timed) {
+				Util.Print("\nCurrent running mode: " + runmutes.mode);
+			}
 
 			// Lin adds: eliminate extra mutants based on random percentage
 			if (percentage != 1) {
@@ -632,7 +652,9 @@ public class TestExecuterCLI extends TestExecuter {
 										mutantResults.put(nameOfTest,
 												nameOfTest + ": " + lineNumber + "; " + failure.getMessage());
 								}
-								System.out.print(".");
+								if (!timed) {
+									System.out.print(".");
+								}
 								Util.DebugPrint(mutantResults.toString());
 								mutantRunning = false;
 								synchronized (lockObject) {
@@ -640,7 +662,9 @@ public class TestExecuterCLI extends TestExecuter {
 								}
 
 							} catch (Exception e) {
-								e.printStackTrace();
+								if (!timed) {
+									e.printStackTrace();
+								}
 								// System.out.println("e.getMessage()");
 								// System.out.println(e.getMessage());
 							}
@@ -740,7 +764,9 @@ public class TestExecuterCLI extends TestExecuter {
 		 * catch(ClassNotFoundException e3){ System.err.println("[Execution 1] "
 		 * + e3); return null; }
 		 */catch (Exception e) {
-			System.err.println("[Exception 2]" + e);
+			if (!timed) {
+				System.err.println("[Exception 2]" + e);
+			}
 			return null;
 		}
 		Util.DebugPrint("\ntest report: " + finalTestResults);
@@ -760,7 +786,9 @@ public class TestExecuterCLI extends TestExecuter {
 			tr.setPath(MutationSystem.TRADITIONAL_MUTANT_PATH + "/mutant_list");
 			tr.outputToFile(methodSignature);
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (!timed) {
+				e.printStackTrace();
+			}
 		}
 
 		return tr;
@@ -793,7 +821,9 @@ public class TestExecuterCLI extends TestExecuter {
 				}
 				reader.close();
 			} catch (Exception e) {
-				System.err.println("Error in update() in TraditioanlMutantsViewerPanel.java");
+				if (!timed) {
+					System.err.println("Error in update() in TraditioanlMutantsViewerPanel.java");
+				}
 			}
 		} else {
 			MutationSystem.MUTANT_PATH = original_mutant_path + "/" + methodSignature;
@@ -814,7 +844,9 @@ public class TestExecuterCLI extends TestExecuter {
 
 			tr.mutants = live_mutants;
 
-			Util.Print("\nCurrent running mode: " + runmutes.mode);
+			if (!timed) {
+				Util.Print("\nCurrent running mode: " + runmutes.mode);
+			}
 
 			// Lin adds: eliminate extra mutants based on random percentage
 			if (percentage != 1) {
@@ -931,7 +963,9 @@ public class TestExecuterCLI extends TestExecuter {
 										mutantResults.put(nameOfTest,
 												nameOfTest + ": " + lineNumber + "; " + failure.getMessage());
 								}
-								System.out.print(".");
+								if (!timed) {
+									System.out.print(".");
+								}
 								Util.DebugPrint(mutantResults.toString());
 								mutantRunning = false;
 								synchronized (lockObject) {
@@ -939,7 +973,9 @@ public class TestExecuterCLI extends TestExecuter {
 								}
 
 							} catch (Exception e) {
-								e.printStackTrace();
+								if (!timed) {
+									e.printStackTrace();
+								}
 								// System.out.println("e.getMessage()");
 								// System.out.println(e.getMessage());
 							}
@@ -1035,7 +1071,9 @@ public class TestExecuterCLI extends TestExecuter {
 		 * catch(ClassNotFoundException e3){ System.err.println("[Execution 1] "
 		 * + e3); return null; }
 		 */catch (Exception e) {
-			System.err.println("[Exception 2]" + e);
+			if (!timed) {
+				System.err.println("[Exception 2]" + e);
+			}
 			return null;
 		}
 		Util.DebugPrint("\ntest report: " + finalTestResults);
@@ -1058,7 +1096,9 @@ public class TestExecuterCLI extends TestExecuter {
 			tr.outputToFile(methodSignature);
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (!timed) {
+				e.printStackTrace();
+			}
 		}
 
 

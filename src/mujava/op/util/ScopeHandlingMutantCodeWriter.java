@@ -15,10 +15,11 @@
  */ 
 package mujava.op.util;
 
-import java.io.*;
-import java.util.*;
 import openjava.mop.*;
 import openjava.ptree.*;
+
+import java.io.PrintWriter;
+import java.util.Stack;
 
 /**
  * <p>Description: </p>

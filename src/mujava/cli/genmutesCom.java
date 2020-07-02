@@ -86,8 +86,11 @@ class genmutesCom {
 	  
 	  @Parameter(names = "-debug", description = "Debug mode")
 	  private boolean debug = false;
-	  
-	  
+
+	 // (SARA)
+	 @Parameter(names = "-timed", description = "Timed mode")
+	 private boolean timed = false;
+
 	  
 public boolean isDebug() {
 		return debug;
@@ -96,8 +99,15 @@ public boolean isDebug() {
 		this.debug = debug;
 	}
 
+	 // (SARA)
+	 public boolean isTimed() {
+		 return timed;
+	 }
+	 public void setTimed(boolean timed) {
+		 this.timed = timed;
+	 }
 
-	public List<String> getParameters()
+	 public List<String> getParameters()
 	{
 		return parameters;
 	}

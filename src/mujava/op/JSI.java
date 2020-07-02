@@ -15,10 +15,13 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import java.util.Vector;
-import openjava.mop.*;
+import mujava.cli.Util;
+import openjava.mop.FileEnvironment;
 import openjava.ptree.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Vector;
 
 /**
  * <p>Generate JSI (Java-specific static modifier insertion) --
@@ -73,7 +76,7 @@ public class JSI extends mujava.op.util.Mutator
 		 out.close();
       } catch ( IOException e ) 
       {
-	     System.err.println( "fails to create " + f_name );
+	     if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) 
       {
 	     System.err.println( "errors during printing " + f_name );

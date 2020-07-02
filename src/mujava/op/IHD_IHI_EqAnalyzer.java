@@ -17,7 +17,7 @@
 
 package mujava.op;
 
-import openjava.mop.*;
+import openjava.mop.Environment;
 import openjava.ptree.*;
 
 /**

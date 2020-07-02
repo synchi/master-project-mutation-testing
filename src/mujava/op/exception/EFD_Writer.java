@@ -15,9 +15,13 @@
  */ 
 package mujava.op.exception;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.ptree.CatchList;
+import openjava.ptree.ParseTreeException;
+import openjava.ptree.StatementList;
+import openjava.ptree.TryStatement;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Description: </p>

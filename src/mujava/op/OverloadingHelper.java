@@ -15,9 +15,10 @@
  */ 
 package mujava.op;
 
-import openjava.mop.*;
-import java.util.*;
-import java.lang.Integer;
+import openjava.mop.OJClass;
+import openjava.mop.OJMethod;
+
+import java.util.Vector;
 
 /**
  * <p>Description: </p>

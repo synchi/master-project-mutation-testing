@@ -15,12 +15,20 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import java.util.*;
-import openjava.mop.*;
-import openjava.ptree.*;
-import java.lang.reflect.*;
 import mujava.MutationSystem;
+import mujava.cli.Util;
+import openjava.mop.FileEnvironment;
+import openjava.mop.OJClass;
+import openjava.mop.OJMethod;
+import openjava.ptree.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Stack;
+import java.util.Vector;
 
 /**
  * <p>Generate ISI (Super keyword insertion) and 
@@ -429,7 +437,7 @@ public class ISD extends mujava.op.util.Mutator
 		 out.close();
       } catch ( IOException e ) 
       {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) 
       {
 		 System.err.println( "errors during printing " + f_name );
@@ -460,7 +468,7 @@ public class ISD extends mujava.op.util.Mutator
 		 out.flush();  out.close();
       } catch ( IOException e ) 
       {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) 
       {
 		 System.err.println( "errors during printing " + f_name );
@@ -491,7 +499,7 @@ public class ISD extends mujava.op.util.Mutator
 		 comp_unit.accept( writer );
 		 out.flush();  out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();
@@ -523,7 +531,7 @@ public class ISD extends mujava.op.util.Mutator
 		 out.flush();  
 		 out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();

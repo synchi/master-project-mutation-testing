@@ -15,10 +15,12 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
-import openjava.mop.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.mop.OJClass;
+import openjava.mop.OJMethod;
+import openjava.ptree.*;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log OMD mutants to files</p>

@@ -16,10 +16,12 @@
 
 package mujava.op.basic;
 
-import openjava.mop.*;
-import openjava.ptree.*;
-import java.io.*;
 import mujava.MutationSystem;
+import openjava.mop.FileEnvironment;
+import openjava.ptree.*;
+
+import java.io.File;
+import java.io.PrintWriter;
 /**
  * <p>
  * </p>

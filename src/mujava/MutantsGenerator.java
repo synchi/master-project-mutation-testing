@@ -44,7 +44,6 @@ import com.sun.tools.javac.Main;
 
 public abstract class MutantsGenerator 
 {
-   //private boolean debug = false;
 //	static int  counter;
    /** Java source file where mutation operators are applied to */
    File original_file;         // mutation�� ������ file
@@ -253,9 +252,11 @@ public abstract class MutantsGenerator
       }
       catch (Exception e)
       {
-         System.err.println("errors during parsing. " + e);
-         System.out.println(e);
-         e.printStackTrace();
+         if (!Util.timed) {
+            System.err.println("errors during parsing. " + e);
+            System.out.println(e);
+            e.printStackTrace();
+         }
       }
    }
 
@@ -301,8 +302,11 @@ public abstract class MutantsGenerator
       } 
       catch (Exception e)
       {
-         System.err.println("errors during parsing. " + e);
-         e.printStackTrace();
+         if (!Util.timed)
+         {
+            System.err.println("errors during parsing. " + e);
+            e.printStackTrace();
+         }
          return false; 
       }
       return true;
@@ -373,8 +377,10 @@ public abstract class MutantsGenerator
       CompilationUnit result;
       try
       {
-    	 System.out.println( "File " + file );
-         result = parser.CompilationUnit( OJSystem.env );         
+         if (!Util.timed) {
+            System.out.println( "File " + file );
+         }
+         result = parser.CompilationUnit( OJSystem.env );
       } 
       catch (ParseException e) 
       {
@@ -382,7 +388,9 @@ public abstract class MutantsGenerator
       }
       catch (Exception e)
       {
-         e.printStackTrace();
+         if (!Util.timed) {
+            e.printStackTrace();
+         }
          result = null;
       }
       return result;
@@ -500,7 +508,9 @@ public abstract class MutantsGenerator
          } 
          catch (Exception e)
          {
-            System.err.println(e);
+            if (!Util.timed) {
+               System.err.println(e);
+            }
          }
       }
       Debug.println();
@@ -518,7 +528,10 @@ public abstract class MutantsGenerator
     */
    private void compileOriginal()
    {
-      String[] pars= { "-classpath",
+      // (SARA)
+      // -nowarn: Suppress compiler major version mismatch warning. Run with Java 8.
+      String[] pars= { "-nowarn",
+                       "-classpath",
                       MutationSystem.CLASS_PATH,
                       MutationSystem.ORIGINAL_PATH + "/" + MutationSystem.CLASS_NAME + ".java"};
       try
@@ -536,7 +549,9 @@ public abstract class MutantsGenerator
       }
       catch (Exception e)
       {
-         System.err.println(e);
+         if(!Util.timed) {
+            System.err.println(e);
+         }
       }
    }
 

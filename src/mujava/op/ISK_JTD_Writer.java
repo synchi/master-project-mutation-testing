@@ -15,9 +15,12 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.ptree.FieldAccess;
+import openjava.ptree.MethodCall;
+import openjava.ptree.ParseTreeException;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log ISD, ISI, and JTD mutants to files</p>

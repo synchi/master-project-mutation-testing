@@ -20,7 +20,6 @@ package mujava.test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,10 +30,11 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Vector;
 
-import mujava.MutationSystem;
 import mujava.TestExecuterCLI;
 import mujava.cli.Util;
 import mujava.cli.runmutes;
+
+import static mujava.cli.Util.timed;
 
 /**
  * <p>
@@ -46,7 +46,6 @@ import mujava.cli.runmutes;
  */
 
 public class TestResultCLI extends TestResult {
-
 	public Vector eq_mutants = new Vector();
 
 	public String path = new String();
@@ -59,8 +58,12 @@ public class TestResultCLI extends TestResult {
 		if (runmutes.mode.equals("fresh")) // fresh mode, need to save with time
 											// stamp
 		{
-			if(!TestExecuterCLI.methodList.contains(method))
-				{System.out.println("ERROR");return;}
+			if (!TestExecuterCLI.methodList.contains(method)) {
+				if (!timed) {
+					System.out.println("ERROR");
+				}
+				return;
+			}
 			
 			TestExecuterCLI.methodList.remove(method);
 			
@@ -353,25 +356,32 @@ public class TestResultCLI extends TestResult {
 				if (!oldTestResult.killed_mutants.contains((String) killedMutant))
 					oldTestResult.killed_mutants.add(killedMutant);
 			}
-			int total = oldTestResult.killed_mutants.size() + oldTestResult.live_mutants.size()
-					+ oldTestResult.eq_mutants.size();
-			Util.Print("\nTotal mutants killed: " + oldTestResult.killed_mutants.size());
-			Util.Print("Total mutants: " + total);
-			double ms = (double)oldTestResult.killed_mutants.size() / (double)total;
-			DecimalFormat df = new DecimalFormat();
-			df.setMaximumFractionDigits(4);
-			Util.Print("Mutation Score: " + df.format(ms));
+
+			if (!timed) {
+				int total = oldTestResult.killed_mutants.size() + oldTestResult.live_mutants.size()
+							+ oldTestResult.eq_mutants.size();
+				Util.Print("\nTotal mutants killed: " + oldTestResult.killed_mutants.size());
+				Util.Print("Total mutants: " + total);
+				double ms = (double) oldTestResult.killed_mutants.size() / (double) total;
+				DecimalFormat df = new DecimalFormat();
+				df.setMaximumFractionDigits(4);
+				Util.Print("Mutation Score: " + df.format(ms));
+			}
 		} else {// file not exist, directly display
-			int total = killed_mutants.size() + live_mutants.size() + eq_mutants.size();
-			Util.Print("\nTotal mutants killed: " + killed_mutants.size());
-			Util.Print("Total mutants: " + total);
-			double ms = (double)killed_mutants.size() / (double)total;
-			DecimalFormat df = new DecimalFormat();
-			df.setMaximumFractionDigits(4);
-			Util.Print("Mutation Score: " + df.format(ms));
+			if (!timed) {
+				int total = killed_mutants.size() + live_mutants.size() + eq_mutants.size();
+				Util.Print("\nTotal mutants killed: " + killed_mutants.size());
+				Util.Print("Total mutants: " + total);
+				double ms = (double) killed_mutants.size() / (double) total;
+				DecimalFormat df = new DecimalFormat();
+				df.setMaximumFractionDigits(4);
+				Util.Print("Mutation Score: " + df.format(ms));
+			}
 		}
-		Util.Print("Please look at the result files (mutant_list and result_list.csv) for details."
-				+ " \nUse \"markequiv\" command to mark equivalent mutants.");
+		if (!timed) {
+			Util.Print("Please look at the result files (mutant_list and result_list.csv) for details."
+					   + " \nUse \"markequiv\" command to mark equivalent mutants.");
+		}
 
 	}
 

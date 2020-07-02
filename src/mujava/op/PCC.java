@@ -15,12 +15,15 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.mop.*;
-import openjava.ptree.*;
 import mujava.MutationSystem;
+import mujava.cli.Util;
 import mujava.util.InheritanceINFO;
-import java.util.*;
+import openjava.mop.FileEnvironment;
+import openjava.ptree.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Vector;
 
 /**
  * <p>Generate PCC (Cast type change) mutants --
@@ -203,7 +206,7 @@ public class PCC extends mujava.op.util.TypeCastMutator
 		 comp_unit.accept( writer );
 		 out.flush();  out.close();
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();

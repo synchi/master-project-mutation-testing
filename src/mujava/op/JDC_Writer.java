@@ -15,9 +15,11 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.ptree.ConstructorDeclaration;
+import openjava.ptree.ParseTreeException;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log JDC mutants to files</p>

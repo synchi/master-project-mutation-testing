@@ -15,9 +15,13 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.ptree.MethodDeclaration;
+import openjava.ptree.Parameter;
+import openjava.ptree.ParseTreeException;
+import openjava.ptree.StatementList;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log PPD mutants to files</p>

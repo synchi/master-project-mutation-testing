@@ -16,8 +16,12 @@
 package mujava.op.basic;
 
 import mujava.op.util.TraditionalMutantCodeWriter;
-import openjava.ptree.*;
-import java.io.*;
+import openjava.ptree.BinaryExpression;
+import openjava.ptree.ParseTreeException;
+
+import java.io.PrintWriter;
+
+
 
 /**
  * <p>Output and log COR mutants to files </p>

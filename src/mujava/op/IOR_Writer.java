@@ -15,12 +15,14 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.ScopeHandlingMutantCodeWriter;
+import openjava.mop.Environment;
+import openjava.mop.OJClass;
+import openjava.ptree.*;
+
+import java.io.PrintWriter;
 
 //import java.util.Enumeration;
-import openjava.mop.*;
 
 /**
  * <p>Output and log IOR mutants to files</p>

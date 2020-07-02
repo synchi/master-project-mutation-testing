@@ -15,10 +15,15 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.mop.*;
-import openjava.ptree.*;
+import mujava.cli.Util;
 import mujava.op.util.DeclAnalyzer;
+import openjava.mop.Environment;
+import openjava.mop.OJField;
+import openjava.mop.OJModifier;
+import openjava.ptree.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 
 
 /**
@@ -122,7 +127,7 @@ public class IHI extends DeclAnalyzer
          out.close();
       } catch ( IOException e ) 
       {
-         System.err.println( "fails to create " + f_name );
+         if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) 
       {
          System.err.println( "errors during printing " + f_name );

@@ -15,8 +15,12 @@
  */ 
 package mujava.op.util;
 
-import java.io.*;
 import mujava.MutationSystem;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * <p>Description: </p>

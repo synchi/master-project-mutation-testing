@@ -15,9 +15,11 @@
  */ 
 package mujava.op.util;
 
-import openjava.mop.*;
-import openjava.ptree.*;
-import java.lang.reflect.*;
+import openjava.mop.Environment;
+import openjava.ptree.CompilationUnit;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * <p>Mutant Generator for the mutation operator that are related with polymorphism. </p>

@@ -15,9 +15,10 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.ptree.*;
 import mujava.op.util.MutantCodeWriter;
+import openjava.ptree.*;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log IOD mutants</p>

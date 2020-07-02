@@ -23,16 +23,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Vector;
-
 
 
 //import openjava.test.stringPlay.stringPlay;
@@ -54,6 +46,12 @@ import mujava.TestExecuterCLI;
 import mujava.test.NoMutantDirException;
 import mujava.test.NoMutantException;
 import mujava.test.TestResultCLI;
+
+import static mujava.cli.Util.logDuration;
+import static mujava.cli.Util.logTime;
+import static mujava.cli.Util.timed;
+
+
 /**
  * <p>
  * Description: run mutants API for command line version
@@ -131,11 +129,13 @@ public class runmutes {
 	//default timeout
 	private static int timeout_sec = 3000;
 
-	/**
+    /**
 	 * @param args
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		Date start = new Date();
+
 		runmutesCom jct = new runmutesCom();
 		// dev only
 		String[] argv = { "-all", "-fresh", "-debug", "testfolder.calTest3", "tool" ,"-timeout", "3" };
@@ -201,6 +201,12 @@ public class runmutes {
 		if (jct.isDebug()) {
 			Util.debug = true;
 		}
+
+		// (SARA)
+        if(jct.isTimed()) {
+			timed = true;
+			logTime(start, "start runmutes");
+		}
 		
 		// add support for timeout
 		// Lin 05232015
@@ -225,16 +231,44 @@ public class runmutes {
 			setJMutationStructureAndSession(testSessionName);
 
 			File folder = new File(MutationSystem.TESTSET_PATH);
-			File[] listOfFiles = folder.listFiles();
 
-			for (File file : listOfFiles) {
-				String fileName = file.getName();
-				if (fileName.contains(".class")) {
-					fileName = fileName.replace(".class", "");
-					testSetList.add(fileName);
-				}
+			// (BEGIN SARA)
+			// Properly load testset in package structure
+			String[] extensions = new String[] { "class" };
+			List<File> testFiles = (List<File>) FileUtils.listFiles(folder, extensions, true);
+			File[] listOfTestFiles = new File[testFiles.size()];
 
-			}
+            // Process file names
+            for (int i = 0; i < testFiles.size(); i++) {
+                // get an absolute path
+                String fileFullPath = testFiles.get(i).getPath();
+                // trim down system path
+                String intermediatePath = fileFullPath.replace(MutationSystem.TESTSET_PATH+"/","");
+
+                if (!intermediatePath.contains(".class")) {
+                    continue;
+                }
+                // need to remove .class extension
+                if (intermediatePath.contains(".class")) {
+                    targetClassName = intermediatePath.substring(0, intermediatePath.length() - ".class".length());
+                }
+
+                // replace / to .
+                String test_name = "";
+                // replace symbols
+                for (int j = 0; j < targetClassName.length(); j++) {
+                    if ((targetClassName.charAt(j) == '\\') || (targetClassName.charAt(j) == '/')) {
+                        test_name = test_name + ".";
+                    } else {
+                        test_name = test_name + targetClassName.charAt(j);
+                    }
+                }
+
+                listOfTestFiles[i] = testFiles.get(i);
+                testSetList.add(test_name);
+            }
+
+            // (END SARA)
 			isSingleTestSet = false;
 
 		} else { // test set is specified
@@ -462,6 +496,9 @@ public class runmutes {
 			}
 		}
 		// System.exit(0);
+		if (timed) {
+			logDuration("end runmutes", start);
+		}
 		return;
 
 	}
@@ -481,11 +518,15 @@ public class runmutes {
 
 	static void runTests(String targetClassName, String testSetName, String[] mutantTypes, double percentage,
 			String mode) throws NoMutantException, NoMutantDirException, IOException {
+		Date start = new Date();
 
-		Util.Print("Class Name: " + targetClassName);
-		Util.Print("Test Name: " + testSetName);
-		Util.Print("-----------------------------------------------");
-		// read file
+		if (timed) {
+			logTime(start,"start test " + testSetName);
+		} else {
+			Util.Print("Class Name: " + targetClassName);
+			Util.Print("Test Name: " + testSetName);
+			Util.Print("-----------------------------------------------");
+		}		// read file
 		// get all method names
 		File folder = new File(MutationSystem.MUTANT_HOME + "/" + targetClassName + "/" + MutationSystem.TM_DIR_NAME);
 		File[] listOfMethods = folder.listFiles();
@@ -526,8 +567,13 @@ public class runmutes {
 			TestResultCLI test_result = new TestResultCLI();
 
 			test_engine.computeOriginalTestResults();
-			System.out.print("Running");
+			if (!timed) {
+                System.out.print("Running");
+            }
 			test_result = test_engine.runTraditionalMutants("All method", mutantTypes, percentage);
+			if (timed) {
+				logDuration("end test " + testSetName, start);
+			}
 			return;
 		}
 
@@ -566,7 +612,9 @@ public class runmutes {
 			test_engine.readTestSet(testSetName);
 
 			TestResultCLI test_result = new TestResultCLI();
-			System.out.print("Running");
+            if (!timed) {
+                System.out.print("Running");
+            }
 			test_engine.computeOriginalTestResults();
 			test_result = test_engine.runTraditionalMutants("All method", mutantTypes, percentage, tr.live_mutants);
 			// }
@@ -586,7 +634,7 @@ public class runmutes {
 			// newMutants.addAll(tr.killed_mutants);
 
 			// if -equiv is an option, need run equivalent mutants too
-			if (runEq) {
+			if (runEq && !timed) {
 				System.out.println("eq mode is enabled");
 				// newMutants.addAll(tr.eq_mutants);
 			}
@@ -612,7 +660,9 @@ public class runmutes {
 			test_engine.readTestSet(testSetName);
 
 			// TestResultCLI test_result = new TestResultCLI();
-			System.out.print("Running");
+            if (!timed) {
+                System.out.print("Running");
+            }
 			test_engine.computeOriginalTestResults();
 			test_engine.runTraditionalMutants("All method", mutantTypes, percentage);
 		}
@@ -658,7 +708,9 @@ public class runmutes {
 		if (mode.equals("fresh")) // fresh mode, need to save time stamp
 		{
 			if (!TestExecuterCLI.methodList2.contains(method)) {
-				System.out.println("ERROR");
+                if (!timed) {
+                    System.out.println("ERROR");
+                }
 				return;
 			}
 

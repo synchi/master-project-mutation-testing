@@ -23,10 +23,9 @@
 
 package mujava.op.util;
 
-import java.io.*;
-import java.util.*;
-import java.lang.Object;
 import openjava.ptree.*;
+
+import java.util.StringTokenizer;
 
 public class StatementParser 
 {

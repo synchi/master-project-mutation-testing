@@ -15,8 +15,9 @@
  */ 
 package mujava.op.exception;
 
-import java.io.*;
 import mujava.op.util.MutantCodeWriter;
+
+import java.io.PrintWriter;
 
 /**
  * <p>Description: </p>

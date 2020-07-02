@@ -17,10 +17,16 @@
 
 package mujava.op;
 
-import java.io.*;
-import openjava.mop.*;
-import openjava.ptree.*;
+import mujava.cli.Util;
 import mujava.op.util.DeclAnalyzer;
+import openjava.mop.Environment;
+import openjava.mop.OJField;
+import openjava.ptree.CompilationUnit;
+import openjava.ptree.FieldDeclaration;
+import openjava.ptree.ParseTreeException;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * <p>Generate IHD (Hiding variable deletion) mutants -- delete each 
@@ -122,7 +128,7 @@ public class IHD extends DeclAnalyzer
          out.flush();  out.close();
       } catch ( IOException e ) 
       {
-         System.err.println( "fails to create " + f_name );
+         if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) 
       {
          System.err.println( "errors during printing " + f_name );

@@ -15,11 +15,14 @@
  */ 
 package mujava.op;
 
-import java.io.*;
-import openjava.mop.*;
-import openjava.ptree.*;
 import mujava.MutationSystem;
+import mujava.cli.Util;
 import mujava.util.InheritanceINFO;
+import openjava.mop.FileEnvironment;
+import openjava.ptree.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * <p>Generate PMD (Member variable declaration with parent class type) mutants ---
@@ -205,7 +208,7 @@ public class PMD extends mujava.op.util.PolymorphicMutator
 		 out.flush();  
 		 out.close();			 
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );			 
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();
@@ -236,7 +239,7 @@ public class PMD extends mujava.op.util.PolymorphicMutator
 		 out.flush();  
 		 out.close();			 
       } catch ( IOException e ) {
-		 System.err.println( "fails to create " + f_name );			 
+		 if (!Util.timed) { System.err.println( "fails to create " + f_name ); }
       } catch ( ParseTreeException e ) {
 		 System.err.println( "errors during printing " + f_name );
 		 e.printStackTrace();

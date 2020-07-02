@@ -18,9 +18,10 @@
 package mujava.op;
 
 import mujava.op.util.MutantCodeWriter;
-import openjava.ptree.*;
+import openjava.ptree.BinaryExpression;
+import openjava.ptree.ParseTreeException;
 
-import java.io.*;
+import java.io.PrintWriter;
 
 /**
  * <p>Output and log AOR mutants to files</p>
