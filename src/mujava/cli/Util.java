@@ -135,20 +135,18 @@ public class Util
 	public static void logTime(Date time, String label, String duration)
 	{
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-		sdf.setTimeZone(getTimeZone("GMT"));
+		sdf.setTimeZone(getTimeZone("Europe/Amsterdam"));
 
 		System.out.println(sdf.format(time) + ", " + label + ", " + duration);
 	}
 
-	public static void logDuration(String label, Date start)
+	public static void logDuration(String label, long nanoStart, long nanoEnd)
 	{
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 		sdf.setTimeZone(getTimeZone("GMT"));
 
-		Date now = new Date();
-
-		long diff = now.getTime() - start.getTime();
-		logTime(now, label, sdf.format(diff));
+		long milliDiff = (nanoEnd - nanoStart) / 1000000;
+		logTime(new Date(), label, sdf.format(milliDiff));
 	}
 
 }

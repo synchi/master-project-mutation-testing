@@ -134,7 +134,8 @@ public class runmutes {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		Date start = new Date();
+		Date dateStart = new Date();
+		long nanoStart = System.nanoTime();
 
 		runmutesCom jct = new runmutesCom();
 		// dev only
@@ -205,7 +206,7 @@ public class runmutes {
 		// (SARA)
         if(jct.isTimed()) {
 			timed = true;
-			logTime(start, "start runmutes");
+			logTime(dateStart, "start runmutes");
 		}
 		
 		// add support for timeout
@@ -496,8 +497,9 @@ public class runmutes {
 			}
 		}
 		// System.exit(0);
+		long nanoEnd = System.nanoTime();
 		if (timed) {
-			logDuration("end runmutes", start);
+			logDuration("end runmutes", nanoStart, nanoEnd);
 		}
 		return;
 
@@ -518,10 +520,10 @@ public class runmutes {
 
 	static void runTests(String targetClassName, String testSetName, String[] mutantTypes, double percentage,
 			String mode) throws NoMutantException, NoMutantDirException, IOException {
-		Date start = new Date();
+		long nanoStart = System.nanoTime();
 
 		if (timed) {
-			logTime(start,"start test " + testSetName);
+			logTime(new Date(),"start test " + testSetName);
 		} else {
 			Util.Print("Class Name: " + targetClassName);
 			Util.Print("Test Name: " + testSetName);
@@ -571,8 +573,9 @@ public class runmutes {
                 System.out.print("Running");
             }
 			test_result = test_engine.runTraditionalMutants("All method", mutantTypes, percentage);
+			long nanoEnd = System.nanoTime();
 			if (timed) {
-				logDuration("end test " + testSetName, start);
+				logDuration("end test " + testSetName, nanoStart, nanoEnd);
 			}
 			return;
 		}

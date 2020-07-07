@@ -45,7 +45,8 @@ public class genmutes {
 	static String muJavaHomePath = new String();
 
 	public static void main(String[] args) throws Exception {
-		Date start = new Date();
+		Date dateStart = new Date();
+		long nanoStart = System.nanoTime();
 
 		// System.out.println("test");
 		genmutesCom jct = new genmutesCom();
@@ -71,7 +72,7 @@ public class genmutes {
 		// (SARA)
 		if(jct.isTimed()) {
 			timed = true;
-			logTime(start, "start genmutes");
+			logTime(dateStart, "start genmutes");
 		}
 
 		// get all existing session name
@@ -258,8 +259,9 @@ public class genmutes {
 
 		//System.exit(0);
 
+		long nanoEnd = System.nanoTime();
 		if (timed) {
-			logDuration("end genmutes", start);
+			logDuration("end genmutes", nanoStart, nanoEnd);
 		}
 	}
 
@@ -287,9 +289,9 @@ public class genmutes {
 			try {
 				// (SARA)
 				String filename = file.getName();
-				Date start = new Date();
+				long nanoStart = System.nanoTime();
 				if (timed) {
-					logTime(start,"start file " + filename);
+					logTime(new Date(),"start file " + filename);
 				} else {
 					System.out.println((i + 1) + " : " + filename);
 				}
@@ -389,8 +391,9 @@ public class genmutes {
 //		         {
 //		        	 line++;
 //		         }
+				long nanoEnd = System.nanoTime();
 				if (timed) {
-					logDuration("end file " + filename, start);
+					logDuration("end file " + filename, nanoStart, nanoEnd);
 				} else {
 					System.out
 							.println("------------------------------------------------------------------");

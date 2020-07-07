@@ -484,9 +484,9 @@ public class TestExecuterCLI extends TestExecuter {
 				BufferedReader reader = new BufferedReader(r);
 				String readSignature = reader.readLine();
 				while (readSignature != null) {// for each method
-					Date start = new Date();
+					long nanoStart = System.nanoTime();
 					if (timed) {
-						logTime(start, "start mutants " + readSignature);
+						logTime(new Date(), "start mutants " + readSignature);
 					}
 					else {
 						System.out.println("For method: " + readSignature);
@@ -498,8 +498,10 @@ public class TestExecuterCLI extends TestExecuter {
 						runMutants(test_result, readSignature, mutantTypes, percentage);
 					} catch (NoMutantException e) {
 					}
+
+					long nanoEnd = System.nanoTime();
 					if (timed) {
-						logDuration("end mutants " + readSignature, start);
+						logDuration("end mutants " + readSignature, nanoStart, nanoEnd);
 					}
 					readSignature = reader.readLine();
 				}
