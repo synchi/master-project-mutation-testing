@@ -443,7 +443,7 @@ public abstract class MutantsGenerator
             v.add(MutationSystem.MUTANT_PATH + "/" + s[i] + "/" + target_file[j]);
          }
 
-         String[] pars = new String[v.size()+2];
+         String[] pars = new String[v.size()+4];
 
          // (SARA)
          // Suppress compile errors and warnings
