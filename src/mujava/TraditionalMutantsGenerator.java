@@ -175,7 +175,7 @@ public class TraditionalMutantsGenerator extends MutantsGenerator
                   mutant_op = new CreateDirForEachMethod(file_env, cdecl, comp_unit, out);
 
                   comp_unit.accept(mutant_op);
-                  out.flush();  
+                  out.flush();
                   out.close();
                } catch (Exception e)
                {

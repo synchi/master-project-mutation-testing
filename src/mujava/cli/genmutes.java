@@ -36,9 +36,7 @@ import mujava.TraditionalMutantsGeneratorCLI;
 
 import com.beust.jcommander.JCommander;
 
-import static mujava.cli.Util.logDuration;
-import static mujava.cli.Util.logTime;
-import static mujava.cli.Util.timed;
+import static mujava.cli.Util.*;
 
 public class genmutes {
 	// static String sessionName = new String();

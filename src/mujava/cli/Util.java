@@ -20,6 +20,8 @@ package mujava.cli;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -41,6 +43,9 @@ public class Util
 	public static int Total = 0;
 	public static boolean debug = false;
 	public static boolean timed = false;
+
+	static PrintStream out;
+	static PrintStream mute;
 	
     //all mutants in a class  	
 	public static Vector mutants = new Vector();
@@ -93,6 +98,15 @@ public class Util
 	 * load config file
 	 */
 	static String loadConfig() throws IOException {
+		Util.out = System.out;
+		Util.mute = new PrintStream(new OutputStream()
+		{
+			public void write(int b)
+			{
+				// NO-OP
+			}
+		});
+
 		FileInputStream inputStream = new FileInputStream("mujavaCLI.config");
 
 		String input = IOUtils.toString(inputStream);
@@ -136,8 +150,9 @@ public class Util
 	{
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		sdf.setTimeZone(getTimeZone("Europe/Amsterdam"));
-
+		unmute();
 		System.out.println(sdf.format(time) + ", " + label + ", " + duration);
+		mute();
 	}
 
 	public static void logDuration(String label, long nanoStart, long nanoEnd)
@@ -149,4 +164,14 @@ public class Util
 		logTime(new Date(), label, sdf.format(milliDiff));
 	}
 
+    public static void mute()
+    {
+		System.setErr(mute);
+		System.setOut(mute);
+    }
+
+    public static void unmute()
+	{
+		System.setOut(out);
+	}
 }

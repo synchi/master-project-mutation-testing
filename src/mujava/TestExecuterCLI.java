@@ -37,9 +37,7 @@ import mujava.util.*;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.notification.Failure;
 
-import static mujava.cli.Util.logDuration;
-import static mujava.cli.Util.logTime;
-import static mujava.cli.Util.timed;
+import static mujava.cli.Util.*;
 
 /**
  * 

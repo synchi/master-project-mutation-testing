@@ -47,9 +47,7 @@ import mujava.test.NoMutantDirException;
 import mujava.test.NoMutantException;
 import mujava.test.TestResultCLI;
 
-import static mujava.cli.Util.logDuration;
-import static mujava.cli.Util.logTime;
-import static mujava.cli.Util.timed;
+import static mujava.cli.Util.*;
 
 
 /**

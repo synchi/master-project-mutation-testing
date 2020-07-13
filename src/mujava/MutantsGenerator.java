@@ -159,7 +159,7 @@ public abstract class MutantsGenerator
             MutantCodeWriter writer = new MutantCodeWriter( out );
             writer.setClassName(cdecl.getName());
             comp_unit.accept( writer );
-            out.flush();  
+            out.flush();
             out.close();
          } 
          catch ( IOException e ) 
@@ -436,7 +436,7 @@ public abstract class MutantsGenerator
          fileName = target_file[0];
 
          
-         
+
          Vector v = new Vector();
          for (int j=0; j<target_file.length; j++)
          {
@@ -445,11 +445,15 @@ public abstract class MutantsGenerator
 
          String[] pars = new String[v.size()+2];
 
-         pars[0] = "-classpath";
-         pars[1] = MutationSystem.CLASS_PATH;
+         // (SARA)
+         // Suppress compile errors and warnings
+         pars[0] = "-Xlint:none";
+         pars[1] = "-nowarn";
+         pars[2] = "-classpath";
+         pars[3] = MutationSystem.CLASS_PATH;
          for (int j=0; j<v.size(); j++)
          {
-            pars[2+j] = v.get(j).toString();
+            pars[4+j] = v.get(j).toString();
          }
          try
          {
@@ -529,8 +533,9 @@ public abstract class MutantsGenerator
    private void compileOriginal()
    {
       // (SARA)
-      // -nowarn: Suppress compiler major version mismatch warning. Run with Java 8.
-      String[] pars= { "-nowarn",
+      // -nowarn: Suppress errors and compiler major version mismatch warning. Run with Java 8.
+      String[] pars= { "-Xlint:none",
+                       "-nowarn",
                        "-classpath",
                       MutationSystem.CLASS_PATH,
                       MutationSystem.ORIGINAL_PATH + "/" + MutationSystem.CLASS_NAME + ".java"};
