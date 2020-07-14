@@ -44,6 +44,7 @@ import com.sun.tools.javac.Main;
 
 public abstract class MutantsGenerator 
 {
+   //private boolean debug = false;
 //	static int  counter;
    /** Java source file where mutation operators are applied to */
    File original_file;         // mutation�� ������ file
@@ -443,17 +444,13 @@ public abstract class MutantsGenerator
             v.add(MutationSystem.MUTANT_PATH + "/" + s[i] + "/" + target_file[j]);
          }
 
-         String[] pars = new String[v.size()+4];
+         String[] pars = new String[v.size()+2];
 
-         // (SARA)
-         // Suppress compile errors and warnings
-         pars[0] = "-Xlint:none";
-         pars[1] = "-nowarn";
-         pars[2] = "-classpath";
-         pars[3] = MutationSystem.CLASS_PATH;
+         pars[0] = "-classpath";
+         pars[1] = MutationSystem.CLASS_PATH;
          for (int j=0; j<v.size(); j++)
          {
-            pars[4+j] = v.get(j).toString();
+            pars[2+j] = v.get(j).toString();
          }
          try
          {
@@ -533,9 +530,8 @@ public abstract class MutantsGenerator
    private void compileOriginal()
    {
       // (SARA)
-      // -nowarn: Suppress errors and compiler major version mismatch warning. Run with Java 8.
-      String[] pars= { "-Xlint:none",
-                       "-nowarn",
+      // -nowarn: Suppress compiler major version mismatch warning. Run with Java 8.
+      String[] pars= { "-nowarn",
                        "-classpath",
                       MutationSystem.CLASS_PATH,
                       MutationSystem.ORIGINAL_PATH + "/" + MutationSystem.CLASS_NAME + ".java"};
