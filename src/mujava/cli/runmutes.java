@@ -133,7 +133,7 @@ public class runmutes {
 	 */
 	public static void main(String[] args) throws Exception {
 		Date dateStart = new Date();
-		long nanoStart = System.nanoTime();
+		long nanoStartRun = System.nanoTime();
 
 		runmutesCom jct = new runmutesCom();
 		// dev only
@@ -450,8 +450,9 @@ public class runmutes {
 		
 		
 		for (File file : files) {
-			
-			// process file names
+            long nanoStartClass = System.nanoTime();
+
+            // process file names
 			
 			// need to be testfolder.cal
 			// get an absolute path
@@ -483,6 +484,10 @@ public class runmutes {
 				}
 			}
 
+			if (timed) {
+			    logTime(new Date(), "start class " + class_name);
+            }
+
 			if (isSingleTestSet)
 				runTests(class_name, testSetName, types, percentage, mode);
 			else {
@@ -493,11 +498,16 @@ public class runmutes {
 					runTests(class_name, testSetList.get(i), types, percentage, mode);
 				}
 			}
+
+            long nanoEndClass = System.nanoTime();
+            if (timed) {
+			    logDuration("end class " + class_name, nanoStartClass, nanoEndClass);
+            }
 		}
 		// System.exit(0);
-		long nanoEnd = System.nanoTime();
+		long nanoEndRun = System.nanoTime();
 		if (timed) {
-			logDuration("end runmutes", nanoStart, nanoEnd);
+			logDuration("end runmutes", nanoStartRun, nanoEndRun);
 		}
 		return;
 
@@ -518,15 +528,16 @@ public class runmutes {
 
 	static void runTests(String targetClassName, String testSetName, String[] mutantTypes, double percentage,
 			String mode) throws NoMutantException, NoMutantDirException, IOException {
-		long nanoStart = System.nanoTime();
-
 		if (timed) {
 			logTime(new Date(),"start test " + testSetName);
 		} else {
 			Util.Print("Class Name: " + targetClassName);
 			Util.Print("Test Name: " + testSetName);
 			Util.Print("-----------------------------------------------");
-		}		// read file
+		}
+        long nanoStart = System.nanoTime();
+
+        // read file
 		// get all method names
 		File folder = new File(MutationSystem.MUTANT_HOME + "/" + targetClassName + "/" + MutationSystem.TM_DIR_NAME);
 		File[] listOfMethods = folder.listFiles();
