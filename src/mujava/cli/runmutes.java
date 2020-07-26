@@ -529,7 +529,7 @@ public class runmutes {
 	static void runTests(String targetClassName, String testSetName, String[] mutantTypes, double percentage,
 			String mode) throws NoMutantException, NoMutantDirException, IOException {
 		if (timed) {
-			logTime(new Date(),"start test " + testSetName);
+			logTime(new Date(),"  start test " + testSetName);
 		} else {
 			Util.Print("Class Name: " + targetClassName);
 			Util.Print("Test Name: " + testSetName);
@@ -584,7 +584,7 @@ public class runmutes {
 			test_result = test_engine.runTraditionalMutants("All method", mutantTypes, percentage);
 			long nanoEnd = System.nanoTime();
 			if (timed) {
-				logDuration("end test " + testSetName, nanoStart, nanoEnd);
+				logDuration("  end test " + testSetName, nanoStart, nanoEnd);
 			}
 			return;
 		}

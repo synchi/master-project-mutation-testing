@@ -484,7 +484,7 @@ public class TestExecuterCLI extends TestExecuter {
 				while (readSignature != null) {// for each method
 					long nanoStart = System.nanoTime();
 					if (timed) {
-						logTime(new Date(), "start mutants " + readSignature);
+						logTime(new Date(), "    start mutants " + readSignature);
 					}
 					else {
 						System.out.println("For method: " + readSignature);
@@ -504,7 +504,7 @@ public class TestExecuterCLI extends TestExecuter {
 
 					long nanoEnd = System.nanoTime();
 					if (timed) {
-						logDuration("end mutants " + readSignature, nanoStart, nanoEnd);
+						logDuration("    end mutants " + readSignature, nanoStart, nanoEnd);
 					}
 					readSignature = reader.readLine();
 				}
