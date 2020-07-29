@@ -494,12 +494,7 @@ public class TestExecuterCLI extends TestExecuter {
 						test_result = new TestResultCLI();
 						// run each method
 						runMutants(test_result, readSignature, mutantTypes, percentage);
-					} catch (NoMutantException | NoMutantDirException e) {
-
-					} catch (Exception e) {
-						if (!timed) {
-							System.err.println("Mutant caused: " + e.getMessage());
-						}
+					} catch (NoMutantException e) {
 					}
 
 					long nanoEnd = System.nanoTime();
@@ -511,7 +506,7 @@ public class TestExecuterCLI extends TestExecuter {
 				reader.close();
 			} catch (Exception e) {
 				if (!timed) {
-					System.err.println("E: " + e.getMessage());
+					System.err.println(e.getMessage());
 				}
 			}
 		} else {
