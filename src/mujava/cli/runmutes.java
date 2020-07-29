@@ -235,7 +235,6 @@ public class runmutes {
 			// Properly load testset in package structure
 			String[] extensions = new String[] { "class" };
 			List<File> testFiles = (List<File>) FileUtils.listFiles(folder, extensions, true);
-			File[] listOfTestFiles = new File[testFiles.size()];
 
             // Process file names
             for (int i = 0; i < testFiles.size(); i++) {
@@ -244,7 +243,8 @@ public class runmutes {
                 // trim down system path
                 String intermediatePath = fileFullPath.replace(MutationSystem.TESTSET_PATH+"/","");
 
-                if (!intermediatePath.contains(".class")) {
+                // SARA - Exclude compiled nested classes, this prevents a lot of exceptions and overhead
+                if (!intermediatePath.contains(".class") || intermediatePath.contains("$")) {
                     continue;
                 }
                 // need to remove .class extension
@@ -263,7 +263,6 @@ public class runmutes {
                     }
                 }
 
-                listOfTestFiles[i] = testFiles.get(i);
                 testSetList.add(test_name);
             }
 
