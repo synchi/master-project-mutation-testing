@@ -878,16 +878,17 @@ public class TestExecuterCLI extends TestExecuter {
 
 			Debug.println("\n\n======================================== Executing Mutants ========================================");
 			for (int i = 0; i < tr.mutants.size(); i++) {
-				// read the information for the "i"th live mutant
-				String mutant_name = tr.mutants.get(i).toString();
-				finalMutantResults.put(mutant_name, "");
-				JMutationLoader mutantLoader = new JMutationLoader(mutant_name);
-				// mutantLoader.loadMutant();
-				mutant_executer = mutantLoader.loadTestClass(testSet);
-				mutant_obj = mutant_executer.newInstance();
-				Debug.print("  " + mutant_name);
-				//System.out.println("!!!!!!!!!!!!!!!!" + mutant_executer.toString());
-				try {
+                // read the information for the "i"th live mutant
+                String mutant_name = tr.mutants.get(i).toString();
+                JMutationLoader mutantLoader;
+                finalMutantResults.put(mutant_name, "");
+
+                try {
+                    mutantLoader = new JMutationLoader(mutant_name);
+                    // mutantLoader.loadMutant();
+                    mutant_executer = mutantLoader.loadTestClass(testSet);
+                    mutant_obj = mutant_executer.newInstance();
+                    Debug.print("  " + mutant_name);
 					// Mutants are runned using Thread to detect infinite loop
 					// caused by mutation
 					Runnable r = new Runnable() {
@@ -1023,7 +1024,7 @@ public class TestExecuterCLI extends TestExecuter {
 						//System.out.println("debug: " + mutantResults);
 
 					}
-				} catch (Exception e) {
+				} catch (Exception | ExceptionInInitializerError e) {
 					mutant_result = e.getCause().getClass().getName() + " : " + e.getCause().getMessage();
 				}
 

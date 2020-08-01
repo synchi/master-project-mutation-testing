@@ -201,7 +201,7 @@ public class TestExecuter {
     try{
       // testcase execution
       mutant_result = testcase.invoke(mutant_obj,null);
-    }catch(Exception e){
+    } catch (Exception | ExceptionInInitializerError e) {
       // execption occurred -> abnormal execution
       mutant_result = e.getCause().getClass().getName()+" : "  +e.getCause().getMessage();
     }
@@ -350,149 +350,168 @@ public class TestExecuter {
       //String[] killed_mutants = new String[testCases.length];
 
       Debug.println("\n\n======================================== Executing Mutants ========================================");
-      for(int i = 0; i < tr.mutants.size(); i++){
-        // read the information for the "i"th live mutant
-        String mutant_name = tr.mutants.get(i).toString();
-        finalMutantResults.put(mutant_name, "");
-        JMutationLoader mutantLoader = new JMutationLoader(mutant_name);
-        //mutantLoader.loadMutant();
-        mutant_executer = mutantLoader.loadTestClass(testSet);
-        mutant_obj = mutant_executer.newInstance();
-        Debug.print("  " + mutant_name);
-        
+        for (int i = 0; i < tr.mutants.size(); i++) {
+            // read the information for the "i"th live mutant
+            String mutant_name = tr.mutants.get(i).toString();
+            JMutationLoader mutantLoader;
+            finalMutantResults.put(mutant_name, "");
 
-        try{
-        // Mutants are runned using Thread to detect infinite loop caused by mutation
-        Runnable r = new Runnable(){
-          public void run(){
-            try{
-           	 mutantRunning = true;
-            	 
-            	  //original test results
-            	  mutantResults = new HashMap<String, String>();
-            	  for(int k = 0;k < testCases.length;k++){
-                    	Annotation[] annotations = testCases[k].getDeclaredAnnotations();
-                      	for(Annotation annotation : annotations)
-                      	{
-                      		//System.out.println("name: " + testCases[k].getName() + annotation.toString() + annotation.toString().indexOf("@org.junit.Test"));
-                      		if(annotation.toString().indexOf("@org.junit.Test") != -1){
-                          		//killed_mutants[k]= "";   // At first, no mutants are killed by each test case
-                      			mutantResults.put(testCases[k].getName(), "pass");
-                          		continue;
-                          	}
-                      	}
-                    }
+            try {
+                mutantLoader = new JMutationLoader(mutant_name);
+                // mutantLoader.loadMutant();
+                mutant_executer = mutantLoader.loadTestClass(testSet);
+                mutant_obj = mutant_executer.newInstance();
+                Debug.print("  " + mutant_name);
+                // Mutants are runned using Thread to detect infinite loop caused by mutation
+                Runnable r = new Runnable() {
+                    public void run() {
+                        try {
+                            mutantRunning = true;
 
-            	JUnitCore jCore = new JUnitCore();	
-             	result = jCore.run(mutant_executer);
-             	
-               	List<Failure> listOfFailure = result.getFailures();
-           		for(Failure failure: listOfFailure){
-           			String nameOfTest = failure.getTestHeader().substring(0, failure.getTestHeader().indexOf("("));
-           			String testSourceName = testSet + "." + nameOfTest;
-           			
-           			//System.out.println(testSourceName);
-           			String[] sb = failure.getTrace().split("\\n");
-           			String lineNumber = "";
-           			for(int i = 0; i < sb.length;i++){
-           				//System.out.println("sb-trace: " + sb[i]);
-           				if(sb[i].indexOf(testSourceName) != -1){
-           					lineNumber = sb[i].substring(sb[i].indexOf(":") + 1, sb[i].indexOf(")"));
-           					
-           				}
-           			}
-           			//get the line where the error happens       
+                            //original test results
+                            mutantResults = new HashMap<String, String>();
+                            for (int k = 0; k < testCases.length; k++) {
+                                Annotation[] annotations = testCases[k].getDeclaredAnnotations();
+                                for (Annotation annotation : annotations) {
+                                    //System.out.println("name: " + testCases[k].getName() + annotation.toString() +
+                                    // annotation.toString().indexOf("@org.junit.Test"));
+                                    if (annotation.toString().indexOf("@org.junit.Test") != -1) {
+                                        //killed_mutants[k]= "";   // At first, no mutants are killed by each test case
+                                        mutantResults.put(testCases[k].getName(), "pass");
+                                        continue;
+                                    }
+                                }
+                            }
+
+                            JUnitCore jCore = new JUnitCore();
+                            result = jCore.run(mutant_executer);
+
+                            List<Failure> listOfFailure = result.getFailures();
+                            for (Failure failure : listOfFailure) {
+                                String nameOfTest =
+                                        failure.getTestHeader().substring(0, failure.getTestHeader().indexOf("("));
+                                String testSourceName = testSet + "." + nameOfTest;
+
+                                //System.out.println(testSourceName);
+                                String[] sb = failure.getTrace().split("\\n");
+                                String lineNumber = "";
+                                for (int i = 0; i < sb.length; i++) {
+                                    //System.out.println("sb-trace: " + sb[i]);
+                                    if (sb[i].indexOf(testSourceName) != -1) {
+                                        lineNumber = sb[i].substring(sb[i].indexOf(":") + 1, sb[i].indexOf(")"));
+
+                                    }
+                                }
+                                //get the line where the error happens
            			/*
            			String tempLineNumber = "";
            			if(failure.getTrace().indexOf(testSourceName) != -1){
-           				tempLineNumber = failure.getTrace().substring(failure.getTrace().indexOf(testSourceName) + testSourceName.length() + 1, failure.getTrace().indexOf(testSourceName) + testSourceName.length() + 5);
+           				tempLineNumber = failure.getTrace().substring(failure.getTrace().indexOf(testSourceName) +
+           				testSourceName.length() + 1, failure.getTrace().indexOf(testSourceName) + testSourceName
+           				.length() + 5);
            				System.out.println("tempLineNumber: " + tempLineNumber);
            				lineNumber = tempLineNumber.substring(0, tempLineNumber.indexOf(")"));
            				//System.out.print("LineNumber: " + lineNumber);
            			}	*/
-           			//get the test name that has the error and save the failure info to the results for mutants
-           			if(failure.getMessage() == null)
-           				mutantResults.put(nameOfTest, nameOfTest + ": " + lineNumber + "; " + "fail");
-           			else if(failure.getMessage().equals(""))
-           				mutantResults.put(nameOfTest, nameOfTest + ": " + lineNumber + "; " + "fail");
-           			else
-           				mutantResults.put(nameOfTest, nameOfTest + ": " + lineNumber + "; " + failure.getMessage());
-           		}
-           	
-           		 System.out.println(mutantResults.toString());
-            	 mutantRunning = false;
-            	    synchronized(lockObject){
-            	      lockObject.notify();
-            	    }
-            	
-            }catch(Exception e){
-              e.printStackTrace();
-              //System.out.println("e.getMessage()");
-              //System.out.println(e.getMessage());
+                                //get the test name that has the error and save the failure info to the results for
+                                // mutants
+                                if (failure.getMessage() == null) {
+                                    mutantResults.put(nameOfTest, nameOfTest + ": " + lineNumber + "; " + "fail");
+                                }
+                                else if (failure.getMessage().equals("")) {
+                                    mutantResults.put(nameOfTest, nameOfTest + ": " + lineNumber + "; " + "fail");
+                                }
+                                else {
+                                    mutantResults.put(nameOfTest,
+                                            nameOfTest + ": " + lineNumber + "; " + failure.getMessage());
+                                }
+                            }
+
+                            System.out.println(mutantResults.toString());
+                            mutantRunning = false;
+                            synchronized (lockObject) {
+                                lockObject.notify();
+                            }
+
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                            //System.out.println("e.getMessage()");
+                            //System.out.println(e.getMessage());
+                        }
+                    }
+                };
+
+                Thread t = new Thread(r);
+                t.start();
+
+                synchronized (lockObject) {
+                    lockObject.wait(TIMEOUT); // Check out if a mutant is in infinite loop
+                }
+                if (mutantRunning) {
+                    //System.out.println("check point4");
+                    t.interrupt();
+                    //mutant_result = "time_out: more than " + TIMEOUT + " seconds";
+                    System.out.println(" time_out: more than " + TIMEOUT + " milliseconds");
+                    // mutantResults.put(nameOfTest, nameOfTest + ": " + lineNumber + "; " + failure.getMessage());
+
+                    for (int k = 0; k < testCases.length; k++) {
+                        Annotation[] annotations = testCases[k].getDeclaredAnnotations();
+                        for (Annotation annotation : annotations) {
+                            //System.out.println("name: " + testCases[k].getName() + annotation.toString() +
+                            // annotation.toString().indexOf("@org.junit.Test"));
+                            if (annotation.toString().indexOf("@org.junit.Test") != -1) {
+                                //killed_mutants[k]= "";   // At first, no mutants are killed by each test case
+                                mutantResults.put(testCases[k].getName(),
+                                        "time_out: more than " + TIMEOUT + " milliseconds");
+                                continue;
+                            }
+                        }
+                    }
+
+                }
+            } catch (Exception | ExceptionInInitializerError e) {
+                mutant_result = e.getCause().getClass().getName() + " : " + e.getCause().getMessage();
             }
-          }
-        };
 
-        Thread t = new Thread(r);
-        t.start();
+            //determine whether a mutant is killed or not
+            //update the test report
+            boolean sign = false;
+            for (int k = 0; k < junitTests.size(); k++)
+            {
+                String name = junitTests.get(k);
+                if (!mutantResults.get(name).equals(originalResults.get(name))) {
+                    sign = true;
+                    //update the final results by tests
+                    if (finalTestResults.get(name).equals("")) {
+                        finalTestResults.put(name, mutant_name);
+                    }
+                    else {
+                        finalTestResults.put(name, finalTestResults.get(name) + ", " + mutant_name);
+                    }
+                    //update the final results by mutants
+                    if (finalMutantResults.get(mutant_name).equals("")) {
+                        finalMutantResults.put(mutant_name, name);
+                    }
+                    else {
+                        finalMutantResults.put(mutant_name, finalMutantResults.get(mutant_name) + ", " + name);
+                    }
+                }
+            }
+            if (sign == true)
+            {
+                tr.killed_mutants.add(mutant_name);
+            }
+            else
+            {
+                tr.live_mutants.add(mutant_name);
+            }
 
-        synchronized(lockObject){
-          lockObject.wait(TIMEOUT); // Check out if a mutant is in infinite loop
+
+            mutantLoader = null;
+            mutant_executer = null;
+            System.gc();
         }
-        if(mutantRunning){
-        	//System.out.println("check point4");
-          t.interrupt();
-          //mutant_result = "time_out: more than " + TIMEOUT + " seconds";
-          System.out.println(" time_out: more than " + TIMEOUT + " milliseconds");
-         // mutantResults.put(nameOfTest, nameOfTest + ": " + lineNumber + "; " + failure.getMessage());
-          
-    	  for(int k = 0;k < testCases.length;k++){
-          	Annotation[] annotations = testCases[k].getDeclaredAnnotations();
-            	for(Annotation annotation : annotations)
-            	{
-            		//System.out.println("name: " + testCases[k].getName() + annotation.toString() + annotation.toString().indexOf("@org.junit.Test"));
-            		if(annotation.toString().indexOf("@org.junit.Test") != -1){
-                		//killed_mutants[k]= "";   // At first, no mutants are killed by each test case
-            			mutantResults.put(testCases[k].getName(), "time_out: more than " + TIMEOUT + " milliseconds");
-                		continue;
-                	}
-            	}
-          }
-    	  
-        }
-      }catch(Exception e){
-        mutant_result = e.getCause().getClass().getName()+" : "  +e.getCause().getMessage();
-      }
-        
-      //determine whether a mutant is killed or not
-      //update the test report
-      boolean sign = false;
-      for(int k = 0;k < junitTests.size();k++){
-    	  String name = junitTests.get(k);	  
-    	  if(!mutantResults.get(name).equals(originalResults.get(name))){
-    		  sign = true;		  
-    		  //update the final results by tests
-    		  if(finalTestResults.get(name).equals(""))
-    			  finalTestResults.put(name, mutant_name);
-    		  else
-    			  finalTestResults.put(name, finalTestResults.get(name) + ", " + mutant_name);
-    		  //update the final results by mutants
-    		  if(finalMutantResults.get(mutant_name).equals(""))
-    			  finalMutantResults.put(mutant_name, name);
-    		  else
-    			  finalMutantResults.put(mutant_name, finalMutantResults.get(mutant_name) + ", " + name);
-    	  }
-      }
-      if(sign == true)
-		  tr.killed_mutants.add(mutant_name);
-	  else
-		  tr.live_mutants.add(mutant_name);
-      
-      
-        mutantLoader = null;
-        mutant_executer = null;
-        System.gc();
-      }
  
       for(int i = 0;i < tr.killed_mutants.size();i++){
         tr.live_mutants.remove(tr.killed_mutants.get(i));
