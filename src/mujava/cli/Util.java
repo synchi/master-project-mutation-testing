@@ -161,7 +161,9 @@ public class Util
 		sdf.setTimeZone(getTimeZone("GMT"));
 
 		long milliDiff = (nanoEnd - nanoStart) / 1000000;
-		logTime(new Date(), label, sdf.format(milliDiff));
+		int days = (int) (milliDiff / (1000*60*60*24));
+		String log = days + "-" + sdf.format(milliDiff) + " = " + milliDiff + " ms";
+		logTime(new Date(), label, log);
 	}
 
     public static void mute()
