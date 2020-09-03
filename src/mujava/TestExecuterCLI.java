@@ -376,7 +376,7 @@ public class TestExecuterCLI extends TestExecuter {
 						}
 
 					}
-				} catch (Exception | ExceptionInInitializerError e) {
+				} catch (Exception | ExceptionInInitializerError | NoClassDefFoundError e) {
 					mutant_result = e.getCause().getClass().getName() + " : " + e.getCause().getMessage();
 				}
 
@@ -716,7 +716,7 @@ public class TestExecuterCLI extends TestExecuter {
 //					if(mutantRunning)
 //						t.stop();
 
-				} catch (Exception | ExceptionInInitializerError e) {
+				} catch (Exception | ExceptionInInitializerError | NoClassDefFoundError e) {
 					mutant_result = e.getCause().getClass().getName() + " : " + e.getCause().getMessage();
                 }
 
@@ -1024,7 +1024,7 @@ public class TestExecuterCLI extends TestExecuter {
 						//System.out.println("debug: " + mutantResults);
 
 					}
-				} catch (Exception | ExceptionInInitializerError e) {
+				} catch (Exception | ExceptionInInitializerError | NoClassDefFoundError e) {
 					mutant_result = e.getCause().getClass().getName() + " : " + e.getCause().getMessage();
 				}
 

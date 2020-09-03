@@ -251,7 +251,7 @@ public class TestExecuterCLISingleThread extends TestExecuterCLI  {
 //					if(mutantRunning)
 //						t.stop();
 					
-				} catch (Exception | ExceptionInInitializerError e ) {
+				} catch (Exception | ExceptionInInitializerError | NoClassDefFoundError e ) {
 					mutant_result = e.getCause().getClass().getName() + " : " + e.getCause().getMessage();
 				}
 

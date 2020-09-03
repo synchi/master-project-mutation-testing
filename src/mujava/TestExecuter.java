@@ -201,7 +201,7 @@ public class TestExecuter {
     try{
       // testcase execution
       mutant_result = testcase.invoke(mutant_obj,null);
-    } catch (Exception | ExceptionInInitializerError e) {
+    } catch (Exception | ExceptionInInitializerError | NoClassDefFoundError e) {
       // execption occurred -> abnormal execution
       mutant_result = e.getCause().getClass().getName()+" : "  +e.getCause().getMessage();
     }
@@ -470,7 +470,7 @@ public class TestExecuter {
                     }
 
                 }
-            } catch (Exception | ExceptionInInitializerError e) {
+            } catch (Exception | ExceptionInInitializerError | NoClassDefFoundError e) {
                 mutant_result = e.getCause().getClass().getName() + " : " + e.getCause().getMessage();
             }
 
