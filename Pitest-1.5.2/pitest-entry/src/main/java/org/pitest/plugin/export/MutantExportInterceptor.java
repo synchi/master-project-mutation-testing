@@ -74,7 +74,7 @@ public class MutantExportInterceptor implements MutationInterceptor {
     } catch (final IOException ex) {
       throw new RuntimeException("Error exporting mutants for report", ex);
     }
-    // SARA
+
     return mutations;
   }
 

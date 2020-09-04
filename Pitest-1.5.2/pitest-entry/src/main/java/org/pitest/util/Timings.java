@@ -50,14 +50,13 @@ public class Timings {
   }
 
   public void report(final PrintStream ps) {
-    // SARA
     long total = 0;
     for (final Entry<Stage, TimeSpan> each : this.timings.entrySet()) {
       total = total + each.getValue().duration();
-      ps.println("> " + each.getKey() + " : " + each.getValue() + " ( " + each.getValue().duration() + " ms )");
+      ps.println("> " + each.getKey() + " : " + each.getValue());
     }
     ps.println(StringUtil.separatorLine());
-    ps.println("> Total " + " : " + new TimeSpan(0, total) + " ( " + total + " ms )");
+    ps.println("> Total " + " : " + new TimeSpan(0, total));
     ps.println(StringUtil.separatorLine());
   }
 

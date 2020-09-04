@@ -90,7 +90,7 @@ public class GregorMutater implements Mutater {
 
   @Override
   public Mutant getMutation(final MutationIdentifier id) {
-  // SARA
+
     final ClassContext context = new ClassContext();
     context.setTargetMutation(Optional.ofNullable(id));
 

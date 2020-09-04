@@ -131,16 +131,12 @@ public class MutationCoverage {
 
     history().initialize();
 
-    // SARA
     this.timings.registerStart(Timings.Stage.BUILD_MUTATION_TESTS);
     final List<MutationAnalysisUnit> tus = buildMutationTests(coverageData,
         engine, args);
     this.timings.registerEnd(Timings.Stage.BUILD_MUTATION_TESTS);
 
     LOG.info("Created  " + tus.size() + " mutation test units");
-
-    // Apply selection step here?
-
     checkMutationsFound(tus);
 
     recordClassPath(coverageData);
