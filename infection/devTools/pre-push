@@ -1,0 +1,3 @@
+#!/bin/bash
+
+make autoreview && make test-unit
