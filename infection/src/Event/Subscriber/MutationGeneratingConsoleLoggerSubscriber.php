@@ -40,6 +40,7 @@ use Infection\Event\MutationGenerationWasFinished;
 use Infection\Event\MutationGenerationWasStarted;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
+use Infection\Time;
 
 /**
  * @internal
@@ -48,6 +49,9 @@ final class MutationGeneratingConsoleLoggerSubscriber implements EventSubscriber
 {
     private OutputInterface $output;
     private ProgressBar $progressBar;
+
+    private $nanoStartGen;
+    private $nanoEndGen;
 
     public function __construct(OutputInterface $output)
     {
@@ -59,7 +63,8 @@ final class MutationGeneratingConsoleLoggerSubscriber implements EventSubscriber
 
     public function onMutationGenerationWasStarted(MutationGenerationWasStarted $event): void
     {
-        // START sara
+        $this->nanoStartGen = hrtime(true);
+
         $this->output->writeln(['', '', 'Generate mutants...', '']);
         $this->progressBar->start($event->getMutableFilesCount());
     }
@@ -72,5 +77,8 @@ final class MutationGeneratingConsoleLoggerSubscriber implements EventSubscriber
     public function onMutationGenerationWasFinished(MutationGenerationWasFinished $event): void
     {
         $this->progressBar->finish();
+        
+        $this->nanoEndGen = hrtime(true);
+        Time::logTime("Genmutes", $this->nanoStartGen, $this->nanoEndGen);
     }
 }

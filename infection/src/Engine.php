@@ -54,6 +54,7 @@ use Infection\TestFramework\Coverage\CoverageChecker;
 use Infection\TestFramework\IgnoresAdditionalNodes;
 use Infection\TestFramework\ProvidesInitialRunOnlyOptions;
 use Infection\TestFramework\TestFrameworkExtraOptionsFilter;
+use Infection\Time;
 
 /**
  * @internal
@@ -107,6 +108,8 @@ final class Engine
      */
     public function execute(): void
     {
+        $nanoStart = hrtime(true);
+
         $this->runInitialTestSuite();
         $this->runMutationAnalysis();
 
@@ -118,6 +121,10 @@ final class Engine
         );
 
         $this->eventDispatcher->dispatch(new ApplicationExecutionWasFinished());
+
+        $nanoEnd = hrtime(true);
+
+        Time::logTime("Total runtime", $nanoStart, $nanoEnd);
     }
 
     private function runInitialTestSuite(): void
@@ -166,10 +173,15 @@ final class Engine
             $this->getNodeIgnorers()
         );
 
+       $nanoStartRun = hrtime(true);
+
         $this->mutationTestingRunner->run(
             $mutations,
             $this->getFilteredExtraOptionsForMutant()
         );
+
+        $nanoEndRun = hrtime(true);
+        Time::logTime("Runmutes", $nanoStartRun, $nanoEndRun);
     }
 
     /**
