@@ -32,6 +32,15 @@ public class MutationTestUnit implements MutationAnalysisUnit {
   private static final Logger               LOG = Log.getLogger();
 
   private final Collection<MutationDetails> availableMutations;
+
+  public Collection<MutationDetails> getAvailableMutations() {
+    return availableMutations;
+  }
+
+  public Collection<ClassName> getTestClasses() {
+    return testClasses;
+  }
+
   private final WorkerFactory               workerFactory;
 
   private final Collection<ClassName>       testClasses;

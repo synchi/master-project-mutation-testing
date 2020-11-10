@@ -41,6 +41,16 @@ public final class MutationDetails implements Serializable {
   private final boolean             isInFinallyBlock;
   private final PoisonStatus        poison;
 
+  private int opcode;
+
+  public int getOpcode() {
+    return opcode;
+  }
+
+  public void setOpcode(int opcode) {
+    this.opcode = opcode;
+  }
+
   public MutationDetails(final MutationIdentifier id, final String filename,
       final String description, final int lineNumber, final int block) {
     this(id, filename, description, lineNumber, block, false, PoisonStatus.NORMAL);

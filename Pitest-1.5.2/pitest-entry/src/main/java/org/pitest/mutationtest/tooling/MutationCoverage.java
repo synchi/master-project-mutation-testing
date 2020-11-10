@@ -26,6 +26,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.pitest.classinfo.ClassByteArraySource;
 import org.pitest.classinfo.ClassInfo;
 import org.pitest.classinfo.ClassName;
@@ -53,8 +55,10 @@ import org.pitest.mutationtest.build.MutationTestBuilder;
 import org.pitest.mutationtest.build.PercentAndConstantTimeoutStrategy;
 import org.pitest.mutationtest.build.TestPrioritiser;
 import org.pitest.mutationtest.build.WorkerFactory;
+import org.pitest.mutationtest.build.MutationTestUnit;
 import org.pitest.mutationtest.config.ReportOptions;
 import org.pitest.mutationtest.config.SettingsFactory;
+import org.pitest.mutationtest.engine.MutationDetails;
 import org.pitest.mutationtest.engine.MutationEngine;
 import org.pitest.mutationtest.execute.MutationAnalysisExecutor;
 import org.pitest.mutationtest.incremental.DefaultCodeHistory;
@@ -91,6 +95,13 @@ public class MutationCoverage {
   }
 
   public CombinedStatistics runReport() throws IOException {
+    Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .excludeFieldsWithoutExposeAnnotation()
+            .serializeNulls()
+            .disableHtmlEscaping()
+//            .registerTypeAdapter(ActorGson.class, new ActorGsonSerializer())
+            .create();
 
     Log.setVerbose(this.data.isVerbose());
 
@@ -131,10 +142,28 @@ public class MutationCoverage {
 
     history().initialize();
 
+
+    System.out.println("\n********* SARA MUTATION TESTING ********\n");
+    // [Sara] tus = mutants
     this.timings.registerStart(Timings.Stage.BUILD_MUTATION_TESTS);
     final List<MutationAnalysisUnit> tus = buildMutationTests(coverageData,
         engine, args);
     this.timings.registerEnd(Timings.Stage.BUILD_MUTATION_TESTS);
+
+    System.out.println("\n\n");
+
+    for (MutationAnalysisUnit unit : tus) {
+      if (unit instanceof MutationTestUnit) {
+        for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
+          String mu = details.getMutator();
+          String operator = (mu.substring(mu.lastIndexOf(".") + 1));
+          System.out.printf("Operator: %s, Line %d, Block %d, Num tests: %d, Poison: %s\n", operator, details.getLineNumber(), details.getBlock(), details.getTestsInOrder().size(), details.mayPoisonJVM());
+        }
+      }
+    }
+
+
+    System.out.println("\n\n");
 
     LOG.info("Created  " + tus.size() + " mutation test units");
     checkMutationsFound(tus);

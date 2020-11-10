@@ -34,6 +34,8 @@ public class MutantExportInterceptor implements MutationInterceptor {
   private Path             mutantsDir;
   private ClassName        currentClass;
 
+  private ClassTree classTree;
+
   public MutantExportInterceptor(FileSystem fileSystem,
       ClassByteArraySource source, String outDir) {
     this.fileSystem = fileSystem;
@@ -48,6 +50,8 @@ public class MutantExportInterceptor implements MutationInterceptor {
 
   @Override
   public void begin(ClassTree clazz) {
+    this.classTree = clazz;
+
     this.currentClass = clazz.name();
     final String[] classLocation = ("export." + clazz.name().asJavaName())
         .split("\\.");
@@ -69,6 +73,9 @@ public class MutantExportInterceptor implements MutationInterceptor {
 
     try {
       for (int i = 0; i != indexable.size(); i++) {
+        MutationDetails mut = indexable.get(i);
+
+        System.out.printf("Class: %s, Class has %d methods, Line: %d, Instruction index: %d \n", mut.getClassName(), classTree.methods().size(), mut.getLineNumber(), mut.getInstructionIndex());
         exportMutantDetails(m, indexable, i);
       }
     } catch (final IOException ex) {
