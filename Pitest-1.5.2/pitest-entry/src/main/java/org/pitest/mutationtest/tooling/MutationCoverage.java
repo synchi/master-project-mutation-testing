@@ -101,7 +101,7 @@ public class MutationCoverage {
     this.baseDir = baseDir;
   }
 
-  public CombinedStatistics runReport() throws IOException, ExecutionException, InterruptedException {
+  public CombinedStatistics runReport() throws IOException {
     Log.setVerbose(this.data.isVerbose());
 
     final Runtime runtime = Runtime.getRuntime();
@@ -172,9 +172,13 @@ public class MutationCoverage {
 
     printStats(stats);
 
-    extractFeaturesForTraining(results);
+      try {
+          extractFeaturesForTraining(results);
+      } catch (InterruptedException | ExecutionException e) {
+          e.printStackTrace();
+      }
 
-    return new CombinedStatistics(stats.getStatistics(),
+      return new CombinedStatistics(stats.getStatistics(),
         coverageData.createSummary());
   }
 
