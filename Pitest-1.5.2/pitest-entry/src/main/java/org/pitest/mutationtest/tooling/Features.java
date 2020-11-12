@@ -47,11 +47,11 @@ public class Features {
     }
 
     public static void printHeader() {
-        System.out.println("MutOperator,NumMutInstr,Opcode,LineNum,BlockNum,MetInstrTotal,MetInstrIdx,MetInstrSucc,NumTests,ReturnType,LocalVars,TryCatch");
+        System.out.println("MutOperator,NumMutInstr,Opcode,LineNum,BlockNum,MetInstrTotal,MetInstrIdx,MetInstrSucc,NumTests,ReturnType,LocalVars,TryCatch,Detected");
     }
 
     public void printRow() {
-        System.out.printf("%s,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d\n",
+        System.out.printf("%s,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d\n",
                 this.mutOperator,
                 this.numMutInstr,
                 this.opcode,
@@ -63,7 +63,8 @@ public class Features {
                 this.numTests,
                 this.returnType,
                 this.localVars,
-                this.tryCatch
+                this.tryCatch,
+                this.detected ? 1 : 0
         );
     }
 
