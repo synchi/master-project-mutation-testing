@@ -13,6 +13,13 @@ public final class Block {
     this.firstInstruction = firstInstruction;
     this.lastInstruction = lastInstruction;
     this.lines = lines;
+//
+//    System.out.println("~~~~~~Block~~~~~~");
+//    System.out.println(this.toString());
+//    for(Integer i : lines) {
+//      System.out.printf("%d ", i);
+//    }
+//    System.out.println("\n");
   }
 
   @Override

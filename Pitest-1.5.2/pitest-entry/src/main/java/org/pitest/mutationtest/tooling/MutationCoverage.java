@@ -19,15 +19,16 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.pitest.classinfo.ClassByteArraySource;
 import org.pitest.classinfo.ClassInfo;
 import org.pitest.classinfo.ClassName;
@@ -41,11 +42,14 @@ import org.pitest.coverage.TestInfo;
 import org.pitest.functional.FCollection;
 import org.pitest.help.Help;
 import org.pitest.help.PitHelpError;
+import org.pitest.mutationtest.DetectionStatus;
 import org.pitest.mutationtest.EngineArguments;
 import org.pitest.mutationtest.HistoryStore;
 import org.pitest.mutationtest.ListenerArguments;
 import org.pitest.mutationtest.MutationAnalyser;
 import org.pitest.mutationtest.MutationConfig;
+import org.pitest.mutationtest.MutationMetaData;
+import org.pitest.mutationtest.MutationResult;
 import org.pitest.mutationtest.MutationResultListener;
 import org.pitest.mutationtest.build.MutationAnalysisUnit;
 import org.pitest.mutationtest.build.MutationGrouper;
@@ -60,6 +64,7 @@ import org.pitest.mutationtest.config.ReportOptions;
 import org.pitest.mutationtest.config.SettingsFactory;
 import org.pitest.mutationtest.engine.MutationDetails;
 import org.pitest.mutationtest.engine.MutationEngine;
+import org.pitest.mutationtest.engine.MutationIdentifier;
 import org.pitest.mutationtest.execute.MutationAnalysisExecutor;
 import org.pitest.mutationtest.incremental.DefaultCodeHistory;
 import org.pitest.mutationtest.incremental.HistoryListener;
@@ -83,6 +88,8 @@ public class MutationCoverage {
   private final File               baseDir;
   private final SettingsFactory    settings;
 
+  private HashMap<MutationIdentifier,Features> featureMap;
+
   public MutationCoverage(final MutationStrategies strategies,
       final File baseDir, final CodeSource code, final ReportOptions data,
       final SettingsFactory settings, final Timings timings) {
@@ -94,15 +101,7 @@ public class MutationCoverage {
     this.baseDir = baseDir;
   }
 
-  public CombinedStatistics runReport() throws IOException {
-    Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .excludeFieldsWithoutExposeAnnotation()
-            .serializeNulls()
-            .disableHtmlEscaping()
-//            .registerTypeAdapter(ActorGson.class, new ActorGsonSerializer())
-            .create();
-
+  public CombinedStatistics runReport() throws IOException, ExecutionException, InterruptedException {
     Log.setVerbose(this.data.isVerbose());
 
     final Runtime runtime = Runtime.getRuntime();
@@ -150,20 +149,8 @@ public class MutationCoverage {
         engine, args);
     this.timings.registerEnd(Timings.Stage.BUILD_MUTATION_TESTS);
 
-    System.out.println("\n\n");
-
-    for (MutationAnalysisUnit unit : tus) {
-      if (unit instanceof MutationTestUnit) {
-        for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
-          String mu = details.getMutator();
-          String operator = (mu.substring(mu.lastIndexOf(".") + 1));
-          System.out.printf("Operator: %s, Line %d, Block %d, Num tests: %d, Poison: %s\n", operator, details.getLineNumber(), details.getBlock(), details.getTestsInOrder().size(), details.mayPoisonJVM());
-        }
-      }
-    }
-
-
-    System.out.println("\n\n");
+    // Machine learning features
+//    extractFeaturesForPrediction(tus);
 
     LOG.info("Created  " + tus.size() + " mutation test units");
     checkMutationsFound(tus);
@@ -178,19 +165,47 @@ public class MutationCoverage {
     final MutationAnalysisExecutor mae = new MutationAnalysisExecutor(
         numberOfThreads(), config);
     this.timings.registerStart(Timings.Stage.RUN_MUTATION_TESTS);
-    mae.run(tus);
+    List<Future<MutationMetaData>> results = mae.run(tus);
     this.timings.registerEnd(Timings.Stage.RUN_MUTATION_TESTS);
 
     LOG.info("Completed in " + timeSpan(t0));
 
     printStats(stats);
 
+    extractFeaturesForTraining(results);
+
     return new CombinedStatistics(stats.getStatistics(),
         coverageData.createSummary());
-
   }
 
-  private void checkExcludedRunners() {
+  private void extractFeaturesForTraining(List<Future<MutationMetaData>> results) throws InterruptedException, ExecutionException {
+    Features.printHeader();
+    for (Future<MutationMetaData> result : results) {
+      for(MutationResult mutant : result.get().getMutations()) {
+        MutationDetails details = mutant.getDetails();
+        DetectionStatus status = mutant.getStatus();
+
+        Features features = new Features(details);
+        features.setDetected(status.isDetected());
+
+        features.printRow();
+      }
+    }
+  }
+
+  private void extractFeaturesForPrediction(List<MutationAnalysisUnit> tus) {
+        Features.printHeader();
+        for (MutationAnalysisUnit unit : tus) {
+          if (unit instanceof MutationTestUnit) {
+            for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
+                Features features = new Features(details);
+                features.printRow();
+            }
+          }
+        }
+    }
+
+    private void checkExcludedRunners() {
     final Collection<String> excludedRunners = this.data.getExcludedRunners();
     if (!excludedRunners.isEmpty()) {
       // Check whether JUnit4 is available or not

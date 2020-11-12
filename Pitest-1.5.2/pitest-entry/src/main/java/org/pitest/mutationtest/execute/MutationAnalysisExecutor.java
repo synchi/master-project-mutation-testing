@@ -33,7 +33,7 @@ public class MutationAnalysisExecutor {
   }
 
   // entry point for mutation testing
-  public void run(final List<MutationAnalysisUnit> testUnits) {
+  public List<Future<MutationMetaData>> run(final List<MutationAnalysisUnit> testUnits) {
 
     LOG.fine("Running " + testUnits.size() + " units");
 
@@ -58,6 +58,7 @@ public class MutationAnalysisExecutor {
 
     signalRunEndToAllListeners();
 
+    return results;
   }
 
   private void processResult(List<Future<MutationMetaData>> results)

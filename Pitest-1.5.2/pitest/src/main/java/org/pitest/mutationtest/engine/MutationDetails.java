@@ -40,8 +40,21 @@ public final class MutationDetails implements Serializable {
   private final ArrayList<TestInfo> testsInOrder = new ArrayList<>();
   private final boolean             isInFinallyBlock;
   private final PoisonStatus        poison;
+  private int totalInstrMethod;
+  private int localVars;
+  private int tryCatchBlocks;
 
-  private int opcode;
+  public String getReturnType() {
+    return returnType;
+  }
+
+  public void setReturnType(String returnType) {
+    this.returnType = returnType;
+  }
+
+  public String returnType;
+
+    private int opcode;
 
   public int getOpcode() {
     return opcode;
@@ -295,5 +308,30 @@ public final class MutationDetails implements Serializable {
     }
     final MutationDetails other = (MutationDetails) obj;
     return Objects.equals(id, other.id);
+  }
+
+  public void setTotalInstrMethod(int totalInstrMethod) {
+    this.totalInstrMethod = totalInstrMethod;
+
+  }
+
+  public int getTotalInstrMethod() {
+    return totalInstrMethod;
+  }
+
+  public void setLocalVars(int localVars) {
+    this.localVars = localVars;
+  }
+
+  public int getLocalVars() {
+    return localVars;
+  }
+
+  public void setTryCatchBlocks(int tryCatchBlocks) {
+    this.tryCatchBlocks = tryCatchBlocks;
+  }
+
+  public int getTryCatchBlocks() {
+    return tryCatchBlocks;
   }
 }
