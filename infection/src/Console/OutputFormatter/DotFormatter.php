@@ -35,6 +35,7 @@ declare(strict_types=1);
 
 namespace Infection\Console\OutputFormatter;
 
+use Infection\Engine;
 use Infection\Mutant\DetectionStatus;
 use Infection\Mutant\MutantExecutionResult;
 use function Safe\sprintf;
@@ -76,9 +77,18 @@ final class DotFormatter extends AbstractOutputFormatter
     {
         parent::advance($executionResult, $mutationCount);
 
+        $key = $executionResult->getOriginalFilePath()
+               . ":" . $executionResult->getOriginalStartingLine()
+               . "." . $executionResult->getMutatorName();
+
         switch ($executionResult->getDetectionStatus()) {
             case DetectionStatus::KILLED:
                 $this->output->write('<killed>.</killed>');
+//                echo("***KILLED $key ***\n");
+//                var_dump(Engine::$featuresMap);
+//                exit();
+
+                (Engine::$featuresMap[$key])->setDetected(1);
 
                 break;
             case DetectionStatus::NOT_COVERED:
@@ -91,6 +101,7 @@ final class DotFormatter extends AbstractOutputFormatter
                 break;
             case DetectionStatus::TIMED_OUT:
                 $this->output->write('<timeout>T</timeout>');
+                (Engine::$featuresMap[$key])->setDetected(1);
 
                 break;
             case DetectionStatus::SKIPPED:
@@ -99,6 +110,7 @@ final class DotFormatter extends AbstractOutputFormatter
                 break;
             case DetectionStatus::ERROR:
                 $this->output->write('<with-error>E</with-error>');
+                (Engine::$featuresMap[$key])->setDetected(1);
 
                 break;
         }

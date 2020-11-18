@@ -35,6 +35,10 @@ declare(strict_types=1);
 
 namespace Infection;
 
+use Infection\Mutation\Mutation;
+use Infection\PhpParser\MutatedNode;
+use PhpParser\Node\Stmt;
+use PhpParser\Node\Stmt\ClassMethod;
 use function explode;
 use Infection\AbstractTestFramework\TestFrameworkAdapter;
 use Infection\Configuration\Configuration;
@@ -73,6 +77,8 @@ final class Engine
     private ConsoleOutput $consoleOutput;
     private MetricsCalculator $metricsCalculator;
     private TestFrameworkExtraOptionsFilter $testFrameworkExtraOptionsFilter;
+
+    public static array $featuresMap = [];
 
     public function __construct(
         Configuration $config,
@@ -168,20 +174,97 @@ final class Engine
 
     private function runMutationAnalysis(): void
     {
+        // SARA
+        /** @var \Traversable $mutations */
         $mutations = $this->mutationGenerator->generate(
             $this->config->mutateOnlyCoveredCode(),
             $this->getNodeIgnorers()
         );
 
+        $muCounter = [];
+
+        $copyMutations = [];
+
+        /** @var Mutation $m */
+        foreach ($mutations as $m) {
+            $copyMutations[] = $m;
+            $location = $m->getOriginalFilePath() . ":" . $m->getOriginalStartingLine();
+            if(isset($muCounter[$location])) {
+                $muCounter[$location]++;
+            } else {
+                $muCounter[$location] = 1;
+            }
+        }
+
+
+
+        /** @var Mutation $mutant */
+        foreach ($copyMutations as $mutant) {
+            $location = $mutant->getOriginalFilePath() . ":" . $mutant->getOriginalStartingLine();
+            $features = new Features($location);
+
+            $operator = $mutant->getMutatorName();
+
+            $features->setMutOperator($operator);
+            $features->setNumTests(count($mutant->getAllTests()));
+            $features->setLineNum($mutant->getOriginalStartingLine());
+            $features->setNumMutStmt($muCounter[$location] ?? 0);
+            $features->setNodeType($mutant->getMutatedNodeClass());
+
+
+            // Extract function info
+            /** @var ClassMethod $scope */
+            $unwrap = $mutant->getMutatedNode()->unwrap();
+            $node = is_array($unwrap) ? $unwrap[0] : $unwrap;
+            $scope = $node->getAttributes()['functionScope'] ?? null;
+
+            if($scope) {
+                $features->setRetByRef($scope->returnsByRef() ? 1 : 0);
+                $features->setMetParaCount(count($scope->getParams()));
+                $features->setReturnType($scope->getReturnType() ?: 'none');
+                $features->setMetStmtTotal(count($scope->getStmts()));
+                $features->setMetMagic(method_exists($scope, 'isMagic') && $scope->isMagic() ? 1 : 0);
+
+                $tryCatchCount = 0;
+                $stmtIdx = -1;
+                foreach($scope->getStmts() as $statement) {
+                    $stmtIdx++;
+                    $sType = get_class($statement);
+                    $sLine = $statement->getStartLine();
+                    $mLine = $features->getLineNum();
+
+                    if(str_contains($sType, "TryCatch")) {
+                        $tryCatchCount++;
+                    }
+
+                    if($sLine == $mLine) {
+                        $features->setStmtType($sType);
+                        $features->setMetStmtIdx($stmtIdx);
+                    }
+                }
+                $lastStmtIdx = $stmtIdx;
+                $features->setMetStmtSucc($lastStmtIdx - $stmtIdx);
+                $features->setTryCatch($tryCatchCount);
+
+            }
+            self::$featuresMap["$location.$operator"] = $features;
+        }
+
        $nanoStartRun = hrtime(true);
 
         $this->mutationTestingRunner->run(
-            $mutations,
+            $copyMutations,
             $this->getFilteredExtraOptionsForMutant()
         );
 
         $nanoEndRun = hrtime(true);
         Time::logTime("Runmutes", $nanoStartRun, $nanoEndRun);
+
+        Features::printHeader();
+        /** @var Features $f */
+        foreach (self::$featuresMap as $f) {
+            $f->printRow();
+        }
     }
 
     /**
