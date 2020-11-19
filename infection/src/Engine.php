@@ -221,7 +221,7 @@ final class Engine
             if($scope) {
                 $features->setRetByRef($scope->returnsByRef() ? 1 : 0);
                 $features->setMetParaCount(count($scope->getParams()));
-                $features->setReturnType($scope->getReturnType() ?: 'none');
+                $features->setReturnType($scope->getReturnType() ? get_class($scope->getReturnType()) : 'none');
                 $features->setMetStmtTotal(count($scope->getStmts()));
                 $features->setMetMagic(method_exists($scope, 'isMagic') && $scope->isMagic() ? 1 : 0);
 

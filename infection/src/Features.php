@@ -263,12 +263,12 @@ class Features
 
     public static function printHeader()
     {
-        echo("Location,MutOperator,NumMutStmt,NodeType,StmtType,LineNum,MetStmtTotal,MetStmtIdx,MetStmtSucc,NumTests,ReturnType,TryCatch,RetByRef,MetParaCount,MetMagic\n");
+        echo("Location,MutOperator,NumMutStmt,NodeType,StmtType,LineNum,MetStmtTotal,MetStmtIdx,MetStmtSucc,NumTests,ReturnType,TryCatch,RetByRef,MetParaCount,MetMagic,Detected\n");
     }
 
     public function printRow()
     {
-        echo("$this->location,$this->mutOperator,$this->numMutStmt,$this->nodeType,$this->stmtType,$this->lineNum,$this->metStmtTotal,$this->metStmtIdx,$this->metStmtSucc,$this->numTests,$this->returnType,$this->tryCatch,$this->retByRef,$this->metParaCount,$this->metMagic\n");
+        echo("$this->location,$this->mutOperator,$this->numMutStmt,$this->nodeType,$this->stmtType,$this->lineNum,$this->metStmtTotal,$this->metStmtIdx,$this->metStmtSucc,$this->numTests,$this->returnType,$this->tryCatch,$this->retByRef,$this->metParaCount,$this->metMagic,$this->detected\n");
     }
 
     /**
