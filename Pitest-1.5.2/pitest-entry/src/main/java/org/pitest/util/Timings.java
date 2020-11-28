@@ -24,9 +24,9 @@ public class Timings {
   public enum Stage {
     BUILD_MUTATION_TESTS("build mutation tests"), RUN_MUTATION_TESTS(
         "run mutation analysis"), SCAN_CLASS_PATH("scan classpath"), COVERAGE(
-            "coverage and dependency analysis");
+            "coverage and dependency analysis"), PREDICTION_STEP("performing and processing predictions");
 
-    private final String description;
+      private final String description;
 
     Stage(final String desc) {
       this.description = desc;

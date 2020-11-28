@@ -43,6 +43,7 @@ public final class MutationDetails implements Serializable {
   private int totalInstrMethod;
   private int localVars;
   private int tryCatchBlocks;
+  private int predictionIdx;
 
   public String getReturnType() {
     return returnType;
@@ -333,5 +334,13 @@ public final class MutationDetails implements Serializable {
 
   public int getTryCatchBlocks() {
     return tryCatchBlocks;
+  }
+
+  public void setPredictionIdx(int predictionIdx) {
+    this.predictionIdx = predictionIdx;
+  }
+
+  public int getPredictionIdx() {
+    return predictionIdx;
   }
 }

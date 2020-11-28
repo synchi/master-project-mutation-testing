@@ -1,9 +1,12 @@
 package org.pitest.mutationtest.tooling;
 
-import org.pitest.mutationtest.DetectionStatus;
 import org.pitest.mutationtest.build.CompoundMutationInterceptor;
 import org.pitest.mutationtest.engine.MutationDetails;
 import org.pitest.mutationtest.engine.MutationIdentifier;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Features {
 
@@ -19,6 +22,7 @@ public class Features {
     private final String returnType;
     private final int    localVars;
     private final int    tryCatch;
+    private final int    predictionIdx;
 
     private boolean detected;
 
@@ -32,6 +36,7 @@ public class Features {
         MutationIdentifier instr = new MutationIdentifier(id.getLocation(), id.getIndexes(), "");
         int numMutInstr = CompoundMutationInterceptor.mutantCounter.get(instr);
 
+        this.predictionIdx = details.getPredictionIdx();
         this.mutOperator   = mutOperator;
         this.numMutInstr   = numMutInstr;
         this.opcode        = details.getOpcode();
@@ -46,12 +51,30 @@ public class Features {
         this.tryCatch      = details.getTryCatchBlocks();
     }
 
-    public static void printHeader() {
-        System.out.println("MutOperator,NumMutInstr,Opcode,LineNum,BlockNum,MetInstrTotal,MetInstrIdx,MetInstrSucc,NumTests,ReturnType,LocalVars,TryCatch,Detected");
+    public static void printHeader(boolean toFile, String name) {
+        String header = "PredictionIdx,MutOperator,NumMutInstr,Opcode,LineNum,BlockNum,MetInstrTotal,MetInstrIdx,MetInstrSucc,NumTests,ReturnType,LocalVars,TryCatch,Detected\n";
+
+        if (toFile) {
+            File f = new File(name);
+            writeToFile(header, name, false);
+        } else {
+            System.out.print(header);
+        }
     }
 
-    public void printRow() {
-        System.out.printf("%s,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d\n",
+    private static void writeToFile(String value, String name, boolean append) {
+        try {
+            FileWriter writer = new FileWriter(name, append);
+            writer.append(value);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void printRow(boolean toFile, String name) {
+        String row = String.format("%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d\n",
+                this.predictionIdx,
                 this.mutOperator,
                 this.numMutInstr,
                 this.opcode,
@@ -66,6 +89,12 @@ public class Features {
                 this.tryCatch,
                 this.detected ? 1 : 0
         );
+
+        if (toFile) {
+            writeToFile(row, name, true);
+        } else {
+            System.out.print(row);
+        }
     }
 
     public void setDetected(boolean detected) {
@@ -74,5 +103,9 @@ public class Features {
 
     public boolean getDetected() {
         return detected;
+    }
+
+    public int getPredictionIdx() {
+        return predictionIdx;
     }
 }

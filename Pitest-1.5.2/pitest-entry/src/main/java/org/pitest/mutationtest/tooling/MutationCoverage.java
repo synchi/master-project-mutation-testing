@@ -14,10 +14,13 @@
  */
 package org.pitest.mutationtest.tooling;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,10 +79,12 @@ import org.pitest.util.StringUtil;
 import org.pitest.util.Timings;
 
 public class MutationCoverage {
+  private static final String CSV_PATH = "/scratch/predictionfiles/";
 
   private static final int         MB  = 1024 * 1024;
 
   private static final Logger      LOG = Log.getLogger();
+  private static int PREDICTION_INDEX = 0;
   private final ReportOptions      data;
 
   private final MutationStrategies strategies;
@@ -149,8 +154,6 @@ public class MutationCoverage {
         engine, args);
     this.timings.registerEnd(Timings.Stage.BUILD_MUTATION_TESTS);
 
-    // Machine learning features
-//    extractFeaturesForPrediction(tus);
 
     LOG.info("Created  " + tus.size() + " mutation test units");
     checkMutationsFound(tus);
@@ -162,10 +165,74 @@ public class MutationCoverage {
     LOG.fine("Free Memory before analysis start " + (runtime.freeMemory() / MB)
         + " mb");
 
-    final MutationAnalysisExecutor mae = new MutationAnalysisExecutor(
+      this.timings.registerStart(Timings.Stage.PREDICTION_STEP);
+
+
+      // Machine learning features
+      extractFeaturesForPrediction(tus);
+
+      List<MutationAnalysisUnit> filteredTus = new ArrayList<>();
+
+      boolean predictionReady = false;
+      HashMap<Integer,String> predictions = new HashMap<>();
+
+      int before = 0;
+      int after = 0;
+      int i = 0;
+
+      System.out.println("Waiting for predictions...");
+      // Poll for predictions file
+      while (!predictionReady) {
+          try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH + "predictions.csv"))) {
+              System.out.println("Found! Processing...");
+              predictionReady = true;
+
+              // Load predictions into list
+              String line;
+              while ((line = br.readLine()) != null) {
+                  String[] pred = line.split(",");
+                  predictions.put(Integer.valueOf(pred[0]), pred[1]);
+              }
+
+              // Apply filter based on predictions
+              for (MutationAnalysisUnit unit : tus) {
+                  ArrayList<MutationDetails> filteredMutants = new ArrayList<>();
+
+                  if (unit instanceof MutationTestUnit) {
+                      for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
+                          before++;
+                          if(predictions.get(details.getPredictionIdx()).equals("1")) {
+                              after++;
+                              filteredMutants.add(details);
+                          }
+                      }
+
+                      filteredTus.add(
+                              new MutationTestUnit(filteredMutants,
+                                      ((MutationTestUnit) unit).getTestClasses(),
+                                      ((MutationTestUnit) unit).getWorkerFactory())
+                      );
+                  }
+              }
+          } catch (IOException e) {
+              // Repeat every 250ms
+              try {
+                  Thread.sleep(250);
+              } catch (InterruptedException interruptedException) {
+                  Thread.currentThread().interrupt();
+              }
+          }
+      }
+
+      System.out.printf("Mutants before, after: %d , %d \n", before, after);
+      this.timings.registerEnd(Timings.Stage.PREDICTION_STEP);
+
+
+      final MutationAnalysisExecutor mae = new MutationAnalysisExecutor(
         numberOfThreads(), config);
     this.timings.registerStart(Timings.Stage.RUN_MUTATION_TESTS);
-    List<Future<MutationMetaData>> results = mae.run(tus);
+    System.out.println("*** Running filtered mutants! ***");
+    List<Future<MutationMetaData>> results = mae.run(filteredTus);
     this.timings.registerEnd(Timings.Stage.RUN_MUTATION_TESTS);
 
     LOG.info("Completed in " + timeSpan(t0));
@@ -173,7 +240,7 @@ public class MutationCoverage {
     printStats(stats);
 
       try {
-          extractFeaturesForTraining(results);
+          extractResultsForEvaluation(results);
       } catch (InterruptedException | ExecutionException e) {
           e.printStackTrace();
       }
@@ -183,7 +250,7 @@ public class MutationCoverage {
   }
 
   private void extractFeaturesForTraining(List<Future<MutationMetaData>> results) throws InterruptedException, ExecutionException {
-    Features.printHeader();
+    Features.printHeader(false, "");
     for (Future<MutationMetaData> result : results) {
       for(MutationResult mutant : result.get().getMutations()) {
         MutationDetails details = mutant.getDetails();
@@ -192,18 +259,35 @@ public class MutationCoverage {
         Features features = new Features(details);
         features.setDetected(status.isDetected());
 
-        features.printRow();
+        features.printRow(false, "");
       }
     }
   }
 
+    private void extractResultsForEvaluation(List<Future<MutationMetaData>> results) throws InterruptedException, ExecutionException {
+        Features.printHeader(true, CSV_PATH + "eval.csv");
+        for (Future<MutationMetaData> result : results) {
+            for(MutationResult mutant : result.get().getMutations()) {
+                MutationDetails details = mutant.getDetails();
+                DetectionStatus status = mutant.getStatus();
+
+                Features features = new Features(details);
+                features.setDetected(status.isDetected());
+
+                features.printRow(true, CSV_PATH + "eval.csv");
+            }
+        }
+    }
+
   private void extractFeaturesForPrediction(List<MutationAnalysisUnit> tus) {
-        Features.printHeader();
+        Features.printHeader(true, CSV_PATH + "features.csv");
         for (MutationAnalysisUnit unit : tus) {
           if (unit instanceof MutationTestUnit) {
             for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
+                details.setPredictionIdx(PREDICTION_INDEX++);
+
                 Features features = new Features(details);
-                features.printRow();
+                features.printRow(true, CSV_PATH + "features.csv");
             }
           }
         }

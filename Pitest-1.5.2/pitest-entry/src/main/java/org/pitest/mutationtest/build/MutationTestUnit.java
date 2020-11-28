@@ -41,6 +41,10 @@ public class MutationTestUnit implements MutationAnalysisUnit {
     return testClasses;
   }
 
+  public WorkerFactory getWorkerFactory() {
+    return workerFactory;
+  }
+
   private final WorkerFactory               workerFactory;
 
   private final Collection<ClassName>       testClasses;
