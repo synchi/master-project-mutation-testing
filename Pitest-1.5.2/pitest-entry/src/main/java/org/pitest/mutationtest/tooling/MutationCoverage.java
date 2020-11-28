@@ -79,190 +79,190 @@ import org.pitest.util.StringUtil;
 import org.pitest.util.Timings;
 
 public class MutationCoverage {
-  private static final String CSV_PATH = "/scratch/predictionfiles/";
+    private static final String CSV_PATH = "/scratch/predictionfiles/";
 
-  private static final int         MB  = 1024 * 1024;
+    private static final int         MB  = 1024 * 1024;
 
-  private static final Logger      LOG = Log.getLogger();
-  private static int PREDICTION_INDEX = 0;
-  private final ReportOptions      data;
+    private static final Logger      LOG = Log.getLogger();
+    private static int PREDICTION_INDEX = 0;
+    private final ReportOptions      data;
 
-  private final MutationStrategies strategies;
-  private final Timings            timings;
-  private final CodeSource         code;
-  private final File               baseDir;
-  private final SettingsFactory    settings;
+    private final MutationStrategies strategies;
+    private final Timings            timings;
+    private final CodeSource         code;
+    private final File               baseDir;
+    private final SettingsFactory    settings;
 
-  private HashMap<MutationIdentifier,Features> featureMap;
+    private HashMap<MutationIdentifier,Features> featureMap;
 
-  public MutationCoverage(final MutationStrategies strategies,
-      final File baseDir, final CodeSource code, final ReportOptions data,
-      final SettingsFactory settings, final Timings timings) {
-    this.strategies = strategies;
-    this.data = data;
-    this.settings = settings;
-    this.timings = timings;
-    this.code = code;
-    this.baseDir = baseDir;
-  }
-
-  public CombinedStatistics runReport() throws IOException {
-    Log.setVerbose(this.data.isVerbose());
-
-    final Runtime runtime = Runtime.getRuntime();
-
-    if (!this.data.isVerbose()) {
-      LOG.info("Verbose logging is disabled. If you encounter a problem, please enable it before reporting an issue.");
+    public MutationCoverage(final MutationStrategies strategies,
+                            final File baseDir, final CodeSource code, final ReportOptions data,
+                            final SettingsFactory settings, final Timings timings) {
+        this.strategies = strategies;
+        this.data = data;
+        this.settings = settings;
+        this.timings = timings;
+        this.code = code;
+        this.baseDir = baseDir;
     }
 
-    LOG.fine("Running report with " + this.data);
+    public CombinedStatistics runReport() throws IOException {
+        Log.setVerbose(this.data.isVerbose());
 
-    LOG.fine("System class path is " + System.getProperty("java.class.path"));
-    LOG.fine("Maximum available memory is " + (runtime.maxMemory() / MB)
-        + " mb");
+        final Runtime runtime = Runtime.getRuntime();
 
-    final long t0 = System.currentTimeMillis();
+        if (!this.data.isVerbose()) {
+            LOG.info("Verbose logging is disabled. If you encounter a problem, please enable it before reporting an issue.");
+        }
 
-    verifyBuildSuitableForMutationTesting();
+        LOG.fine("Running report with " + this.data);
 
-    checkExcludedRunners();
+        LOG.fine("System class path is " + System.getProperty("java.class.path"));
+        LOG.fine("Maximum available memory is " + (runtime.maxMemory() / MB)
+                + " mb");
 
-    final CoverageDatabase coverageData = coverage().calculateCoverage();
+        final long t0 = System.currentTimeMillis();
 
-    LOG.fine("Used memory after coverage calculation "
-        + ((runtime.totalMemory() - runtime.freeMemory()) / MB) + " mb");
-    LOG.fine("Free Memory after coverage calculation "
-        + (runtime.freeMemory() / MB) + " mb");
+        verifyBuildSuitableForMutationTesting();
 
-    final MutationStatisticsListener stats = new MutationStatisticsListener();
+        checkExcludedRunners();
 
-    final EngineArguments args = EngineArguments.arguments()
-        .withExcludedMethods(this.data.getExcludedMethods())
-        .withMutators(this.data.getMutators());
-    final MutationEngine engine = this.strategies.factory().createEngine(args);
+        final CoverageDatabase coverageData = coverage().calculateCoverage();
 
-    final List<MutationResultListener> config = createConfig(t0, coverageData,
-        stats, engine);
+        LOG.fine("Used memory after coverage calculation "
+                + ((runtime.totalMemory() - runtime.freeMemory()) / MB) + " mb");
+        LOG.fine("Free Memory after coverage calculation "
+                + (runtime.freeMemory() / MB) + " mb");
 
-    history().initialize();
+        final MutationStatisticsListener stats = new MutationStatisticsListener();
 
+        final EngineArguments args = EngineArguments.arguments()
+                .withExcludedMethods(this.data.getExcludedMethods())
+                .withMutators(this.data.getMutators());
+        final MutationEngine engine = this.strategies.factory().createEngine(args);
 
-    System.out.println("\n********* SARA MUTATION TESTING ********\n");
-    // [Sara] tus = mutants
-    this.timings.registerStart(Timings.Stage.BUILD_MUTATION_TESTS);
-    final List<MutationAnalysisUnit> tus = buildMutationTests(coverageData,
-        engine, args);
-    this.timings.registerEnd(Timings.Stage.BUILD_MUTATION_TESTS);
+        final List<MutationResultListener> config = createConfig(t0, coverageData,
+                stats, engine);
 
-
-    LOG.info("Created  " + tus.size() + " mutation test units");
-    checkMutationsFound(tus);
-
-    recordClassPath(coverageData);
-
-    LOG.fine("Used memory before analysis start "
-        + ((runtime.totalMemory() - runtime.freeMemory()) / MB) + " mb");
-    LOG.fine("Free Memory before analysis start " + (runtime.freeMemory() / MB)
-        + " mb");
-
-      this.timings.registerStart(Timings.Stage.PREDICTION_STEP);
+        history().initialize();
 
 
-      // Machine learning features
-      extractFeaturesForPrediction(tus);
-
-      List<MutationAnalysisUnit> filteredTus = new ArrayList<>();
-
-      boolean predictionReady = false;
-      HashMap<Integer,String> predictions = new HashMap<>();
-
-      int before = 0;
-      int after = 0;
-      int i = 0;
-
-      System.out.println("Waiting for predictions...");
-      // Poll for predictions file
-      while (!predictionReady) {
-          try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH + "predictions.csv"))) {
-              System.out.println("Found! Processing...");
-              predictionReady = true;
-
-              // Load predictions into list
-              String line;
-              while ((line = br.readLine()) != null) {
-                  String[] pred = line.split(",");
-                  predictions.put(Integer.valueOf(pred[0]), pred[1]);
-              }
-
-              // Apply filter based on predictions
-              for (MutationAnalysisUnit unit : tus) {
-                  ArrayList<MutationDetails> filteredMutants = new ArrayList<>();
-
-                  if (unit instanceof MutationTestUnit) {
-                      for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
-                          before++;
-                          if(predictions.get(details.getPredictionIdx()).equals("1")) {
-                              after++;
-                              filteredMutants.add(details);
-                          }
-                      }
-
-                      filteredTus.add(
-                              new MutationTestUnit(filteredMutants,
-                                      ((MutationTestUnit) unit).getTestClasses(),
-                                      ((MutationTestUnit) unit).getWorkerFactory())
-                      );
-                  }
-              }
-          } catch (IOException e) {
-              // Repeat every 250ms
-              try {
-                  Thread.sleep(250);
-              } catch (InterruptedException interruptedException) {
-                  Thread.currentThread().interrupt();
-              }
-          }
-      }
-
-      System.out.printf("Mutants before, after: %d , %d \n", before, after);
-      this.timings.registerEnd(Timings.Stage.PREDICTION_STEP);
+        System.out.println("\n********* SARA MUTATION TESTING ********\n");
+        // [Sara] tus = mutants
+        this.timings.registerStart(Timings.Stage.BUILD_MUTATION_TESTS);
+        final List<MutationAnalysisUnit> tus = buildMutationTests(coverageData,
+                engine, args);
+        this.timings.registerEnd(Timings.Stage.BUILD_MUTATION_TESTS);
 
 
-      final MutationAnalysisExecutor mae = new MutationAnalysisExecutor(
-        numberOfThreads(), config);
-    this.timings.registerStart(Timings.Stage.RUN_MUTATION_TESTS);
-    System.out.println("*** Running filtered mutants! ***");
-    List<Future<MutationMetaData>> results = mae.run(filteredTus);
-    this.timings.registerEnd(Timings.Stage.RUN_MUTATION_TESTS);
+        LOG.info("Created  " + tus.size() + " mutation test units");
+        checkMutationsFound(tus);
 
-    LOG.info("Completed in " + timeSpan(t0));
+        recordClassPath(coverageData);
 
-    printStats(stats);
+        LOG.fine("Used memory before analysis start "
+                + ((runtime.totalMemory() - runtime.freeMemory()) / MB) + " mb");
+        LOG.fine("Free Memory before analysis start " + (runtime.freeMemory() / MB)
+                + " mb");
 
-      try {
-          extractResultsForEvaluation(results);
-      } catch (InterruptedException | ExecutionException e) {
-          e.printStackTrace();
-      }
+        this.timings.registerStart(Timings.Stage.PREDICTION_STEP);
 
-      return new CombinedStatistics(stats.getStatistics(),
-        coverageData.createSummary());
-  }
 
-  private void extractFeaturesForTraining(List<Future<MutationMetaData>> results) throws InterruptedException, ExecutionException {
-    Features.printHeader(false, "");
-    for (Future<MutationMetaData> result : results) {
-      for(MutationResult mutant : result.get().getMutations()) {
-        MutationDetails details = mutant.getDetails();
-        DetectionStatus status = mutant.getStatus();
+        // Machine learning features
+        extractFeaturesForPrediction(tus);
 
-        Features features = new Features(details);
-        features.setDetected(status.isDetected());
+        List<MutationAnalysisUnit> filteredTus = new ArrayList<>();
 
-        features.printRow(false, "");
-      }
+        boolean predictionReady = false;
+        HashMap<Integer,String> predictions = new HashMap<>();
+
+        int before = 0;
+        int after = 0;
+        int i = 0;
+
+        System.out.println("Waiting for predictions...");
+        // Poll for predictions file
+        while (!predictionReady) {
+            try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH + "predictions.csv"))) {
+                System.out.println("Found! Processing...");
+                predictionReady = true;
+
+                // Load predictions into list
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] pred = line.split(",");
+                    predictions.put(Integer.valueOf(pred[0]), pred[1]);
+                }
+
+                // Apply filter based on predictions
+                for (MutationAnalysisUnit unit : tus) {
+                    ArrayList<MutationDetails> filteredMutants = new ArrayList<>();
+
+                    if (unit instanceof MutationTestUnit) {
+                        for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
+                            before++;
+                            if(predictions.get(details.getPredictionIdx()).equals("1")) {
+                                after++;
+                                filteredMutants.add(details);
+                            }
+                        }
+
+                        filteredTus.add(
+                                new MutationTestUnit(filteredMutants,
+                                        ((MutationTestUnit) unit).getTestClasses(),
+                                        ((MutationTestUnit) unit).getWorkerFactory())
+                        );
+                    }
+                }
+            } catch (IOException e) {
+                // Repeat every 250ms
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        System.out.printf("Mutants before, after: %d , %d \n", before, after);
+        this.timings.registerEnd(Timings.Stage.PREDICTION_STEP);
+
+
+        final MutationAnalysisExecutor mae = new MutationAnalysisExecutor(
+                numberOfThreads(), config);
+        this.timings.registerStart(Timings.Stage.RUN_MUTATION_TESTS);
+        System.out.println("*** Running filtered mutants! ***");
+        List<Future<MutationMetaData>> results = mae.run(filteredTus);
+        this.timings.registerEnd(Timings.Stage.RUN_MUTATION_TESTS);
+
+        LOG.info("Completed in " + timeSpan(t0));
+
+        printStats(stats);
+
+        try {
+            extractResultsForEvaluation(results);
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        return new CombinedStatistics(stats.getStatistics(),
+                coverageData.createSummary());
     }
-  }
+
+    private void extractFeaturesForTraining(List<Future<MutationMetaData>> results) throws InterruptedException, ExecutionException {
+        Features.printHeader(false, "");
+        for (Future<MutationMetaData> result : results) {
+            for(MutationResult mutant : result.get().getMutations()) {
+                MutationDetails details = mutant.getDetails();
+                DetectionStatus status = mutant.getStatus();
+
+                Features features = new Features(details);
+                features.setDetected(status.isDetected());
+
+                features.printRow(false, "");
+            }
+        }
+    }
 
     private void extractResultsForEvaluation(List<Future<MutationMetaData>> results) throws InterruptedException, ExecutionException {
         Features.printHeader(true, CSV_PATH + "eval.csv");
@@ -279,174 +279,188 @@ public class MutationCoverage {
         }
     }
 
-  private void extractFeaturesForPrediction(List<MutationAnalysisUnit> tus) {
-        Features.printHeader(true, CSV_PATH + "features.csv");
+    private void extractFeaturesForPrediction(List<MutationAnalysisUnit> tus) {
+        Features.printHeader(true, CSV_PATH + "temp_features.csv");
         for (MutationAnalysisUnit unit : tus) {
-          if (unit instanceof MutationTestUnit) {
-            for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
-                details.setPredictionIdx(PREDICTION_INDEX++);
+            if (unit instanceof MutationTestUnit) {
+                for (MutationDetails details : ((MutationTestUnit) unit).getAvailableMutations()) {
+                    details.setPredictionIdx(PREDICTION_INDEX++);
 
-                Features features = new Features(details);
-                features.printRow(true, CSV_PATH + "features.csv");
+                    Features features = new Features(details);
+                    features.printRow(true, CSV_PATH + "temp_features.csv");
+                }
             }
-          }
         }
+
+        long fileSize = 0;
+        FileInfo currentFile = new FileInfo(CSV_PATH + "temp_features.csv");
+
+        while (fileSize < currentFile.Length)//check size is stable or increased
+        {
+            fileSize = currentFile.Length;//get current size
+            System.Threading.Thread.Sleep(250);//wait a moment for processing copy
+            currentFile.Refresh();//refresh length value
+        }
+
+        File file = new File("temp_features.csv");
+        File file2 = new File("features.csv");
+        file.renameTo(file2);
     }
 
     private void checkExcludedRunners() {
-    final Collection<String> excludedRunners = this.data.getExcludedRunners();
-    if (!excludedRunners.isEmpty()) {
-      // Check whether JUnit4 is available or not
-      try {
-        Class.forName("org.junit.runner.RunWith");
-      } catch (final ClassNotFoundException e) {
-        // JUnit4 is not available on the classpath
-        throw new PitHelpError(Help.NO_JUNIT_EXCLUDE_RUNNERS);
-      }
-    }
-  }
-
-private int numberOfThreads() {
-    return Math.max(1, this.data.getNumberOfThreads());
-  }
-
-  private List<MutationResultListener> createConfig(final long t0,
-      final CoverageDatabase coverageData,
-      final MutationStatisticsListener stats, final MutationEngine engine) {
-    final List<MutationResultListener> ls = new ArrayList<>();
-
-    ls.add(stats);
-
-    final ListenerArguments args = new ListenerArguments(
-        this.strategies.output(), coverageData, new SmartSourceLocator(
-            this.data.getSourceDirs()), engine, t0, this.data.isFullMutationMatrix());
-    
-    final MutationResultListener mutationReportListener = this.strategies
-        .listenerFactory().getListener(this.data.getFreeFormProperties(), args);
-
-    ls.add(mutationReportListener);
-    ls.add(new HistoryListener(history()));
-
-    if (!this.data.isVerbose()) {
-      ls.add(new SpinnerListener(System.out));
-    }
-    return ls;
-  }
-
-  private void recordClassPath(final CoverageDatabase coverageData) {
-    final Set<ClassName> allClassNames = getAllClassesAndTests(coverageData);
-    final Collection<HierarchicalClassId> ids = FCollection.map(
-        this.code.getClassInfo(allClassNames), ClassInfo.toFullClassId());
-    history().recordClassPath(ids, coverageData);
-  }
-
-  private Set<ClassName> getAllClassesAndTests(
-      final CoverageDatabase coverageData) {
-    final Set<ClassName> names = new HashSet<>();
-    for (final ClassName each : this.code.getCodeUnderTestNames()) {
-      names.add(each);
-      FCollection.mapTo(coverageData.getTestsForClass(each),
-          TestInfo.toDefiningClassName(), names);
-    }
-    return names;
-  }
-
-  private void verifyBuildSuitableForMutationTesting() {
-    this.strategies.buildVerifier().verify(this.code);
-  }
-
-  private void printStats(final MutationStatisticsListener stats) {
-    final PrintStream ps = System.out;
-
-    ps.println(StringUtil.separatorLine('='));
-    ps.println("- Mutators");
-    ps.println(StringUtil.separatorLine('='));
-    for (final Score each : stats.getStatistics().getScores()) {
-      each.report(ps);
-      ps.println(StringUtil.separatorLine());
+        final Collection<String> excludedRunners = this.data.getExcludedRunners();
+        if (!excludedRunners.isEmpty()) {
+            // Check whether JUnit4 is available or not
+            try {
+                Class.forName("org.junit.runner.RunWith");
+            } catch (final ClassNotFoundException e) {
+                // JUnit4 is not available on the classpath
+                throw new PitHelpError(Help.NO_JUNIT_EXCLUDE_RUNNERS);
+            }
+        }
     }
 
-    ps.println(StringUtil.separatorLine('='));
-    ps.println("- Timings");
-    ps.println(StringUtil.separatorLine('='));
-    this.timings.report(ps);
-
-    ps.println(StringUtil.separatorLine('='));
-    ps.println("- Statistics");
-    ps.println(StringUtil.separatorLine('='));
-    stats.getStatistics().report(ps);
-  }
-
-  private List<MutationAnalysisUnit> buildMutationTests(
-      final CoverageDatabase coverageData, final MutationEngine engine, EngineArguments args) {
-
-    final MutationConfig mutationConfig = new MutationConfig(engine, coverage()
-        .getLaunchOptions());
-
-    final ClassByteArraySource bas = fallbackToClassLoader(new ClassPathByteArraySource(
-        this.data.getClassPath()));
-
-    final TestPrioritiser testPrioritiser = this.settings.getTestPrioritiser()
-        .makeTestPrioritiser(this.data.getFreeFormProperties(), this.code,
-            coverageData);
-
-    final MutationInterceptor interceptor = this.settings.getInterceptor()
-        .createInterceptor(this.data, bas);
-
-    final MutationSource source = new MutationSource(mutationConfig, testPrioritiser, bas, interceptor);
-
-    final MutationAnalyser analyser = new IncrementalAnalyser(
-        new DefaultCodeHistory(this.code, history()), coverageData);
-
-    final WorkerFactory wf = new WorkerFactory(this.baseDir, coverage()
-        .getConfiguration(), mutationConfig, args,
-        new PercentAndConstantTimeoutStrategy(this.data.getTimeoutFactor(),
-            this.data.getTimeoutConstant()), this.data.isVerbose(), this.data.isFullMutationMatrix(),
-            this.data.getClassPath().getLocalClassPath());
-
-    final MutationGrouper grouper = this.settings.getMutationGrouper().makeFactory(
-        this.data.getFreeFormProperties(), this.code,
-        this.data.getNumberOfThreads(), this.data.getMutationUnitSize());
-    final MutationTestBuilder builder = new MutationTestBuilder(wf, analyser,
-        source, grouper);
-
-    return builder.createMutationTestUnits(this.code.getCodeUnderTestNames());
-  }
-
-  private void checkMutationsFound(final List<MutationAnalysisUnit> tus) {
-    if (tus.isEmpty()) {
-      if (this.data.shouldFailWhenNoMutations()) {
-        throw new PitHelpError(Help.NO_MUTATIONS_FOUND);
-      } else {
-        LOG.warning(Help.NO_MUTATIONS_FOUND.toString());
-      }
+    private int numberOfThreads() {
+        return Math.max(1, this.data.getNumberOfThreads());
     }
-  }
 
-  private String timeSpan(final long t0) {
-    return "" + ((System.currentTimeMillis() - t0) / 1000) + " seconds";
-  }
+    private List<MutationResultListener> createConfig(final long t0,
+                                                      final CoverageDatabase coverageData,
+                                                      final MutationStatisticsListener stats, final MutationEngine engine) {
+        final List<MutationResultListener> ls = new ArrayList<>();
 
-  private CoverageGenerator coverage() {
-    return this.strategies.coverage();
-  }
+        ls.add(stats);
 
-  private HistoryStore history() {
-    return this.strategies.history();
-  }
+        final ListenerArguments args = new ListenerArguments(
+                this.strategies.output(), coverageData, new SmartSourceLocator(
+                this.data.getSourceDirs()), engine, t0, this.data.isFullMutationMatrix());
 
-  // For reasons not yet understood classes from rt.jar are not resolved for some
-  // projects during static analysis phase. For now fall back to the classloader when
-  // a class not provided by project classpath
-  private ClassByteArraySource fallbackToClassLoader(final ClassByteArraySource bas) {
-    final ClassByteArraySource clSource = ClassloaderByteArraySource.fromContext();
-    return clazz -> {
-      final Optional<byte[]> maybeBytes = bas.getBytes(clazz);
-      if (maybeBytes.isPresent()) {
-        return maybeBytes;
-      }
-      LOG.log(Level.FINE, "Could not find " + clazz + " on classpath for analysis. Falling back to classloader");
-      return clSource.getBytes(clazz);
-    };
-  }
+        final MutationResultListener mutationReportListener = this.strategies
+                .listenerFactory().getListener(this.data.getFreeFormProperties(), args);
+
+        ls.add(mutationReportListener);
+        ls.add(new HistoryListener(history()));
+
+        if (!this.data.isVerbose()) {
+            ls.add(new SpinnerListener(System.out));
+        }
+        return ls;
+    }
+
+    private void recordClassPath(final CoverageDatabase coverageData) {
+        final Set<ClassName> allClassNames = getAllClassesAndTests(coverageData);
+        final Collection<HierarchicalClassId> ids = FCollection.map(
+                this.code.getClassInfo(allClassNames), ClassInfo.toFullClassId());
+        history().recordClassPath(ids, coverageData);
+    }
+
+    private Set<ClassName> getAllClassesAndTests(
+            final CoverageDatabase coverageData) {
+        final Set<ClassName> names = new HashSet<>();
+        for (final ClassName each : this.code.getCodeUnderTestNames()) {
+            names.add(each);
+            FCollection.mapTo(coverageData.getTestsForClass(each),
+                    TestInfo.toDefiningClassName(), names);
+        }
+        return names;
+    }
+
+    private void verifyBuildSuitableForMutationTesting() {
+        this.strategies.buildVerifier().verify(this.code);
+    }
+
+    private void printStats(final MutationStatisticsListener stats) {
+        final PrintStream ps = System.out;
+
+        ps.println(StringUtil.separatorLine('='));
+        ps.println("- Mutators");
+        ps.println(StringUtil.separatorLine('='));
+        for (final Score each : stats.getStatistics().getScores()) {
+            each.report(ps);
+            ps.println(StringUtil.separatorLine());
+        }
+
+        ps.println(StringUtil.separatorLine('='));
+        ps.println("- Timings");
+        ps.println(StringUtil.separatorLine('='));
+        this.timings.report(ps);
+
+        ps.println(StringUtil.separatorLine('='));
+        ps.println("- Statistics");
+        ps.println(StringUtil.separatorLine('='));
+        stats.getStatistics().report(ps);
+    }
+
+    private List<MutationAnalysisUnit> buildMutationTests(
+            final CoverageDatabase coverageData, final MutationEngine engine, EngineArguments args) {
+
+        final MutationConfig mutationConfig = new MutationConfig(engine, coverage()
+                .getLaunchOptions());
+
+        final ClassByteArraySource bas = fallbackToClassLoader(new ClassPathByteArraySource(
+                this.data.getClassPath()));
+
+        final TestPrioritiser testPrioritiser = this.settings.getTestPrioritiser()
+                .makeTestPrioritiser(this.data.getFreeFormProperties(), this.code,
+                        coverageData);
+
+        final MutationInterceptor interceptor = this.settings.getInterceptor()
+                .createInterceptor(this.data, bas);
+
+        final MutationSource source = new MutationSource(mutationConfig, testPrioritiser, bas, interceptor);
+
+        final MutationAnalyser analyser = new IncrementalAnalyser(
+                new DefaultCodeHistory(this.code, history()), coverageData);
+
+        final WorkerFactory wf = new WorkerFactory(this.baseDir, coverage()
+                .getConfiguration(), mutationConfig, args,
+                new PercentAndConstantTimeoutStrategy(this.data.getTimeoutFactor(),
+                        this.data.getTimeoutConstant()), this.data.isVerbose(), this.data.isFullMutationMatrix(),
+                this.data.getClassPath().getLocalClassPath());
+
+        final MutationGrouper grouper = this.settings.getMutationGrouper().makeFactory(
+                this.data.getFreeFormProperties(), this.code,
+                this.data.getNumberOfThreads(), this.data.getMutationUnitSize());
+        final MutationTestBuilder builder = new MutationTestBuilder(wf, analyser,
+                source, grouper);
+
+        return builder.createMutationTestUnits(this.code.getCodeUnderTestNames());
+    }
+
+    private void checkMutationsFound(final List<MutationAnalysisUnit> tus) {
+        if (tus.isEmpty()) {
+            if (this.data.shouldFailWhenNoMutations()) {
+                throw new PitHelpError(Help.NO_MUTATIONS_FOUND);
+            } else {
+                LOG.warning(Help.NO_MUTATIONS_FOUND.toString());
+            }
+        }
+    }
+
+    private String timeSpan(final long t0) {
+        return "" + ((System.currentTimeMillis() - t0) / 1000) + " seconds";
+    }
+
+    private CoverageGenerator coverage() {
+        return this.strategies.coverage();
+    }
+
+    private HistoryStore history() {
+        return this.strategies.history();
+    }
+
+    // For reasons not yet understood classes from rt.jar are not resolved for some
+    // projects during static analysis phase. For now fall back to the classloader when
+    // a class not provided by project classpath
+    private ClassByteArraySource fallbackToClassLoader(final ClassByteArraySource bas) {
+        final ClassByteArraySource clSource = ClassloaderByteArraySource.fromContext();
+        return clazz -> {
+            final Optional<byte[]> maybeBytes = bas.getBytes(clazz);
+            if (maybeBytes.isPresent()) {
+                return maybeBytes;
+            }
+            LOG.log(Level.FINE, "Could not find " + clazz + " on classpath for analysis. Falling back to classloader");
+            return clSource.getBytes(clazz);
+        };
+    }
 }
