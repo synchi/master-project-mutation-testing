@@ -293,13 +293,16 @@ public class MutationCoverage {
         }
 
         long fileSize = 0;
-        FileInfo currentFile = new FileInfo(CSV_PATH + "temp_features.csv");
+        File currentFile = new File(CSV_PATH + "temp_features.csv");
 
-        while (fileSize < currentFile.Length)//check size is stable or increased
+        while (fileSize < currentFile.length())//check size is stable or increased
         {
-            fileSize = currentFile.Length;//get current size
-            System.Threading.Thread.Sleep(250);//wait a moment for processing copy
-            currentFile.Refresh();//refresh length value
+            fileSize = currentFile.length();
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         File file = new File("temp_features.csv");
