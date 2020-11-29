@@ -10,7 +10,8 @@ namespace Infection;
  */
 class Features
 {
-    private string $location;
+
+    private int $predIdx;
     private string $mutOperator;
     private int $numMutStmt;
     private string $nodeType;
@@ -29,11 +30,11 @@ class Features
 
     /**
      * Features constructor.
-     * @param string $location
+     * @param int $predIdx
      */
-    public function __construct(string $location)
+    public function __construct(int $predIdx)
     {
-        $this->location = $location;
+        $this->predIdx = $predIdx;
 
         // Default values
         $this->mutOperator  = "none";
@@ -56,17 +57,17 @@ class Features
     /**
      * @return string
      */
-    public function getLocation(): string
+    public function getPredIdx(): string
     {
-        return $this->location;
+        return $this->predIdx;
     }
 
     /**
-     * @param string $location
+     * @param string $predIdx
      */
-    public function setLocation(string $location): void
+    public function setPredIdx(string $predIdx): void
     {
-        $this->location = $location;
+        $this->predIdx = $predIdx;
     }
 
     /**
@@ -261,14 +262,14 @@ class Features
         $this->metParaCount = $metParaCount;
     }
 
-    public static function printHeader()
+    public static function getHeader(): string
     {
-        echo("Location,MutOperator,NumMutStmt,NodeType,StmtType,LineNum,MetStmtTotal,MetStmtIdx,MetStmtSucc,NumTests,ReturnType,TryCatch,RetByRef,MetParaCount,MetMagic,Detected\n");
+        return "Location,MutOperator,NumMutStmt,NodeType,StmtType,LineNum,MetStmtTotal,MetStmtIdx,MetStmtSucc,NumTests,ReturnType,TryCatch,RetByRef,MetParaCount,MetMagic,Detected\n";
     }
 
-    public function printRow()
+    public function getRow(): string
     {
-        echo("$this->location,$this->mutOperator,$this->numMutStmt,$this->nodeType,$this->stmtType,$this->lineNum,$this->metStmtTotal,$this->metStmtIdx,$this->metStmtSucc,$this->numTests,$this->returnType,$this->tryCatch,$this->retByRef,$this->metParaCount,$this->metMagic,$this->detected\n");
+        return "$this->predIdx,$this->mutOperator,$this->numMutStmt,$this->nodeType,$this->stmtType,$this->lineNum,$this->metStmtTotal,$this->metStmtIdx,$this->metStmtSucc,$this->numTests,$this->returnType,$this->tryCatch,$this->retByRef,$this->metParaCount,$this->metMagic,$this->detected\n";
     }
 
     /**

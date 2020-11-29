@@ -54,6 +54,7 @@ class MutantExecutionResult
     private int $originalStartingLine;
     private string $originalCode;
     private string $mutatedCode;
+    private int $predIdx;
 
     public function __construct(
         string $processCommandLine,
@@ -64,7 +65,8 @@ class MutantExecutionResult
         string $originalFilePath,
         int $originalStartingLine,
         string $originalCode,
-        string $mutatedCode
+        string $mutatedCode,
+        int $predIdx
     ) {
         Assert::oneOf($detectionStatus, DetectionStatus::ALL);
         Assert::oneOf($mutatorName, array_keys(ProfileList::ALL_MUTATORS));
@@ -78,6 +80,8 @@ class MutantExecutionResult
         $this->originalStartingLine = $originalStartingLine;
         $this->originalCode = $originalCode;
         $this->mutatedCode = $mutatedCode;
+
+        $this->predIdx = $predIdx;
     }
 
     public static function createFromNonCoveredMutant(Mutant $mutant): self
@@ -148,7 +152,24 @@ class MutantExecutionResult
             $mutation->getOriginalFilePath(),
             $mutation->getOriginalStartingLine(),
             $mutant->getPrettyPrintedOriginalCode(),
-            $mutant->getMutatedCode()
+            $mutant->getMutatedCode(),
+            $mutation->getPredIdx()
         );
+    }
+
+    /**
+     * @param int $predIdx
+     */
+    public function setPredIdx(int $predIdx)
+    {
+        $this->predIdx = $predIdx;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPredIdx(): int
+    {
+        return $this->predIdx;
     }
 }

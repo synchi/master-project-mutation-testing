@@ -69,6 +69,8 @@ class Mutation
 
     private ?string $hash = null;
 
+    private int $predIdx;
+
     /**
      * @param Node[] $originalFileAst
      * @param array<string|int|float> $attributes
@@ -183,5 +185,21 @@ class Mutation
         }
 
         return md5(implode('_', $hashKeys));
+    }
+
+    /**
+     * @param int $predIdx
+     */
+    public function setPredIdx(int $predIdx)
+    {
+        $this->predIdx = $predIdx;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPredIdx(): int
+    {
+        return $this->predIdx;
     }
 }

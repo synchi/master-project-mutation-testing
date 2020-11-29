@@ -77,17 +77,11 @@ final class DotFormatter extends AbstractOutputFormatter
     {
         parent::advance($executionResult, $mutationCount);
 
-        $key = $executionResult->getOriginalFilePath()
-               . ":" . $executionResult->getOriginalStartingLine()
-               . "." . $executionResult->getMutatorName();
+        $key = $executionResult->getPredIdx();
 
         switch ($executionResult->getDetectionStatus()) {
             case DetectionStatus::KILLED:
                 $this->output->write('<killed>.</killed>');
-//                echo("***KILLED $key ***\n");
-//                var_dump(Engine::$featuresMap);
-//                exit();
-
                 (Engine::$featuresMap[$key])->setDetected(1);
 
                 break;

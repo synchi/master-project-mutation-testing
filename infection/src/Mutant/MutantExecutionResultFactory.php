@@ -69,7 +69,8 @@ class MutantExecutionResultFactory
             $mutation->getOriginalFilePath(),
             $mutation->getOriginalStartingLine(),
             $mutant->getPrettyPrintedOriginalCode(),
-            $mutant->getMutatedCode()
+            $mutant->getMutatedCode(),
+            $mutation->getPredIdx()
         );
     }
 

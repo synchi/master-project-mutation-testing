@@ -35,8 +35,10 @@ declare(strict_types=1);
 
 namespace Infection;
 
+use Infection\Mutant\Mutant;
 use Infection\Mutation\Mutation;
 use Infection\PhpParser\MutatedNode;
+use Infection\Time;
 use PhpParser\Node\Stmt;
 use PhpParser\Node\Stmt\ClassMethod;
 use function explode;
@@ -58,13 +60,13 @@ use Infection\TestFramework\Coverage\CoverageChecker;
 use Infection\TestFramework\IgnoresAdditionalNodes;
 use Infection\TestFramework\ProvidesInitialRunOnlyOptions;
 use Infection\TestFramework\TestFrameworkExtraOptionsFilter;
-use Infection\Time;
 
 /**
  * @internal
  */
 final class Engine
 {
+    public const CSV_PATH = "/scratch/predictionfiles/";
     private Configuration $config;
     private TestFrameworkAdapter $adapter;
     private CoverageChecker $coverageChecker;
@@ -174,97 +176,55 @@ final class Engine
 
     private function runMutationAnalysis(): void
     {
-        // SARA
-        /** @var \Traversable $mutations */
-        $mutations = $this->mutationGenerator->generate(
-            $this->config->mutateOnlyCoveredCode(),
-            $this->getNodeIgnorers()
-        );
+        $nanoStartPred = hrtime(true);
 
-        $muCounter = [];
+        // Extract features and clone mutants out of the iterator
+        $mutants = $this->generateMutantsWithFeatures();
 
-        $copyMutations = [];
+        // Write to file (prediction input)
+        $this->exportFeatures("features.csv");
 
-        /** @var Mutation $m */
-        foreach ($mutations as $m) {
-            $copyMutations[] = $m;
-            $location = $m->getOriginalFilePath() . ":" . $m->getOriginalStartingLine();
-            if(isset($muCounter[$location])) {
-                $muCounter[$location]++;
-            } else {
-                $muCounter[$location] = 1;
-            }
+        echo("Waiting for predictions... ");
+        // Wait for prediction result
+        $predfile = self::CSV_PATH . "predictions.csv";
+        while (!file_exists($predfile)) {
+            usleep(250000);
         }
+        echo("Found, processing. \n");
 
-
-
-        /** @var Mutation $mutant */
-        foreach ($copyMutations as $mutant) {
-            $location = $mutant->getOriginalFilePath() . ":" . $mutant->getOriginalStartingLine();
-            $features = new Features($location);
-
-            $operator = $mutant->getMutatorName();
-
-            $features->setMutOperator($operator);
-            $features->setNumTests(count($mutant->getAllTests()));
-            $features->setLineNum($mutant->getOriginalStartingLine());
-            $features->setNumMutStmt($muCounter[$location] ?? 0);
-            $features->setNodeType($mutant->getMutatedNodeClass());
-
-
-            // Extract function info
-            /** @var ClassMethod $scope */
-            $unwrap = $mutant->getMutatedNode()->unwrap();
-            $node = is_array($unwrap) ? $unwrap[0] : $unwrap;
-            $scope = $node->getAttributes()['functionScope'] ?? null;
-
-            if($scope) {
-                $features->setRetByRef($scope->returnsByRef() ? 1 : 0);
-                $features->setMetParaCount(count($scope->getParams()));
-                $features->setReturnType($scope->getReturnType() ? get_class($scope->getReturnType()) : 'none');
-                $features->setMetStmtTotal(count($scope->getStmts()));
-                $features->setMetMagic(method_exists($scope, 'isMagic') && $scope->isMagic() ? 1 : 0);
-
-                $tryCatchCount = 0;
-                $stmtIdx = -1;
-                foreach($scope->getStmts() as $statement) {
-                    $stmtIdx++;
-                    $sType = get_class($statement);
-                    $sLine = $statement->getStartLine();
-                    $mLine = $features->getLineNum();
-
-                    if(str_contains($sType, "TryCatch")) {
-                        $tryCatchCount++;
-                    }
-
-                    if($sLine == $mLine) {
-                        $features->setStmtType($sType);
-                        $features->setMetStmtIdx($stmtIdx);
-                    }
-                }
-                $lastStmtIdx = $stmtIdx;
-                $features->setMetStmtSucc($lastStmtIdx - $stmtIdx);
-                $features->setTryCatch($tryCatchCount);
-
-            }
-            self::$featuresMap["$location.$operator"] = $features;
+        $file = fopen($predfile, "r");
+        $predictions = [];
+        while ($row = fgets($file)) {
+            $pred = explode(",", $row);
+            $predictions[$pred[0]] = $pred[1];
         }
+        fclose($file);
+
+        $before = count($mutants);
+
+        $filteredMutants = $this->filterMutants($predictions, $mutants);
+
+        $after = count($filteredMutants);
+
+        echo("Num mutants before: $before; after: $after\n");
+
+        $nanoEndPred = hrtime(true);
+        Time::logTime("Prediction incl pre- and post-processing", $nanoStartPred, $nanoEndPred);
 
        $nanoStartRun = hrtime(true);
 
         $this->mutationTestingRunner->run(
-            $copyMutations,
+            $filteredMutants,
             $this->getFilteredExtraOptionsForMutant()
         );
 
         $nanoEndRun = hrtime(true);
         Time::logTime("Runmutes", $nanoStartRun, $nanoEndRun);
 
-        Features::printHeader();
-        /** @var Features $f */
-        foreach (self::$featuresMap as $f) {
-            $f->printRow();
+        /** @var Mutation $fm */
+        foreach($filteredMutants as $fm) {
         }
+        $this->exportFeatures("eval.csv");
     }
 
     /**
@@ -289,5 +249,130 @@ final class Engine
         }
 
         return $this->config->getTestFrameworkExtraOptions();
+    }
+
+    private function exportFeatures(string $filename = ""): void
+    {
+        if (empty($filename)) {
+            echo(Features::getHeader());
+            /** @var Features $f */
+            foreach (self::$featuresMap as $f) {
+                echo($f->getRow());
+            }
+        } else {
+            $path = self::CSV_PATH . $filename;
+            $file = fopen($path, "w");
+            fwrite($file, Features::getHeader());
+            /** @var Features $f */
+            foreach (self::$featuresMap as $f) {
+                fwrite($file, $f->getRow());
+            }
+        }
+    }
+
+    /**
+     * @return array
+     */
+    private function generateMutantsWithFeatures(): array
+    {
+        /** @var \Traversable $mutations */
+        $mutations = $this->mutationGenerator->generate(
+            $this->config->mutateOnlyCoveredCode(),
+            $this->getNodeIgnorers()
+        );
+
+
+        $muCounter = [];
+
+        $copyMutations = [];
+
+        /** @var Mutation $m */
+        foreach ($mutations as $m) {
+            $copyMutations[] = $m;
+            $location        = $m->getOriginalFilePath() . ":" . $m->getOriginalStartingLine();
+            if (isset($muCounter[$location])) {
+                $muCounter[$location]++;
+            } else {
+                $muCounter[$location] = 1;
+            }
+        }
+
+        $predIdx = 0;
+
+        /** @var Mutation $mutant */
+        foreach ($copyMutations as $mutant) {
+            $mutant->setPredIdx($predIdx);
+            $features = new Features($predIdx++);
+
+            $operator = $mutant->getMutatorName();
+
+            $features->setMutOperator($operator);
+            $features->setNumTests(count($mutant->getAllTests()));
+            $features->setLineNum($mutant->getOriginalStartingLine());
+            $features->setNumMutStmt($muCounter[$location] ?? 0);
+            $features->setNodeType($mutant->getMutatedNodeClass());
+
+
+            // Extract function info
+            /** @var ClassMethod $scope */
+            $unwrap = $mutant->getMutatedNode()->unwrap();
+            $node   = is_array($unwrap) ? $unwrap[0] : $unwrap;
+            $scope  = $node->getAttributes()['functionScope'] ?? null;
+
+            if ($scope) {
+                $features->setRetByRef($scope->returnsByRef() ? 1 : 0);
+                $features->setMetParaCount(count($scope->getParams()));
+                $features->setReturnType($scope->getReturnType() ? get_class($scope->getReturnType()) : 'none');
+                $features->setMetStmtTotal(count($scope->getStmts()));
+                $features->setMetMagic(method_exists($scope, 'isMagic') && $scope->isMagic() ? 1 : 0);
+
+                $tryCatchCount = 0;
+                $stmtIdx       = -1;
+                foreach ($scope->getStmts() as $statement) {
+                    $stmtIdx++;
+                    $sType = get_class($statement);
+                    $sLine = $statement->getStartLine();
+                    $mLine = $features->getLineNum();
+
+                    if (str_contains($sType, "TryCatch")) {
+                        $tryCatchCount++;
+                    }
+
+                    if ($sLine == $mLine) {
+                        $features->setStmtType($sType);
+                        $features->setMetStmtIdx($stmtIdx);
+                    }
+                }
+                $lastStmtIdx = $stmtIdx;
+                $features->setMetStmtSucc($lastStmtIdx - $stmtIdx);
+                $features->setTryCatch($tryCatchCount);
+
+            }
+            self::$featuresMap[$predIdx] = $features;
+        }
+        return $copyMutations;
+    }
+
+    /**
+     * @param array $predictions
+     * @param array $mutants
+     * @return array Mutants filtered based on predicted to be detected
+     */
+    private function filterMutants(array $predictions, array $mutants): array
+    {
+        $filteredMutants = [];
+
+        /** @var Mutation $mutant */
+        foreach($mutants as $mutant) {
+            $idx = strval($mutant->getPredIdx());
+            $val = $predictions[$idx];
+            echo("$idx, $val \n");
+
+            if($predictions[$idx] == 1) {
+                $filteredMutants[] = $mutant;
+            }
+        }
+
+        return $filteredMutants;
     }
 }
