@@ -291,22 +291,20 @@ public class MutationCoverage {
                 }
             }
         }
+        File file = new File(CSV_PATH + "temp_features.csv");
+        long len = 0;
 
-        long fileSize = 0;
-        File currentFile = new File(CSV_PATH + "temp_features.csv");
-
-        while (fileSize < currentFile.length())//check size is stable or increased
-        {
-            fileSize = currentFile.length();
+        while(len < file.length()) {
+            len = file.length();
             try {
                 Thread.sleep(250);
             } catch (InterruptedException interruptedException) {
                 Thread.currentThread().interrupt();
             }
+            System.out.print(".");
         }
 
-        File file = new File("temp_features.csv");
-        File file2 = new File("features.csv");
+        File file2 = new File(CSV_PATH + "features.csv");
         file.renameTo(file2);
     }
 
