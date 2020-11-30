@@ -182,31 +182,37 @@ final class Engine
         $mutants = $this->generateMutantsWithFeatures();
 
         // Write to file (prediction input)
-        $this->exportFeatures("features.csv");
 
-        echo("Waiting for predictions... ");
-        // Wait for prediction result
-        $predfile = self::CSV_PATH . "predictions.csv";
-        while (!file_exists($predfile)) {
-            usleep(250000);
+        $predMode = true;
+        if($predMode) {
+            $this->exportFeatures("features.csv");
+
+            echo("Waiting for predictions... ");
+            // Wait for prediction result
+            $predfile = self::CSV_PATH . "predictions.csv";
+            while (!file_exists($predfile)) {
+                usleep(250000);
+            }
+            echo("Found, processing. \n");
+
+            $file = fopen($predfile, "r");
+            $predictions = [];
+            while ($row = fgets($file)) {
+                $pred = explode(",", $row);
+                $predictions[$pred[0]] = $pred[1];
+            }
+            fclose($file);
+
+            $before = count($mutants);
+
+            $filteredMutants = $this->filterMutants($predictions, $mutants);
+
+            $after = count($filteredMutants);
+
+            echo("Num mutants before: $before; after: $after\n");
+        } else {
+            $filteredMutants = $mutants;
         }
-        echo("Found, processing. \n");
-
-        $file = fopen($predfile, "r");
-        $predictions = [];
-        while ($row = fgets($file)) {
-            $pred = explode(",", $row);
-            $predictions[$pred[0]] = $pred[1];
-        }
-        fclose($file);
-
-        $before = count($mutants);
-
-        $filteredMutants = $this->filterMutants($predictions, $mutants);
-
-        $after = count($filteredMutants);
-
-        echo("Num mutants before: $before; after: $after\n");
 
         $nanoEndPred = hrtime(true);
         Time::logTime("Prediction incl pre- and post-processing", $nanoStartPred, $nanoEndPred);
@@ -221,10 +227,8 @@ final class Engine
         $nanoEndRun = hrtime(true);
         Time::logTime("Runmutes", $nanoStartRun, $nanoEndRun);
 
-        /** @var Mutation $fm */
-        foreach($filteredMutants as $fm) {
-        }
         $this->exportFeatures("eval.csv");
+//        $this->exportFeatures("ml-extract.csv");
     }
 
     /**
@@ -260,13 +264,14 @@ final class Engine
                 echo($f->getRow());
             }
         } else {
-            $path = self::CSV_PATH . $filename;
-            $file = fopen($path, "w");
+            $tempPath = self::CSV_PATH . "temp.csv";
+            $file     = fopen($tempPath, "w");
             fwrite($file, Features::getHeader());
             /** @var Features $f */
             foreach (self::$featuresMap as $f) {
                 fwrite($file, $f->getRow());
             }
+            rename($tempPath, self::CSV_PATH . $filename);
         }
     }
 
@@ -301,8 +306,9 @@ final class Engine
 
         /** @var Mutation $mutant */
         foreach ($copyMutations as $mutant) {
+            $location = $mutant->getOriginalFilePath() . ":" . $mutant->getOriginalStartingLine();
             $mutant->setPredIdx($predIdx);
-            $features = new Features($predIdx++);
+            $features = new Features($predIdx);
 
             $operator = $mutant->getMutatorName();
 
@@ -348,7 +354,7 @@ final class Engine
                 $features->setTryCatch($tryCatchCount);
 
             }
-            self::$featuresMap[$predIdx] = $features;
+            self::$featuresMap[$predIdx++] = $features;
         }
         return $copyMutations;
     }
