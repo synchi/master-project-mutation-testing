@@ -372,7 +372,6 @@ final class Engine
         foreach($mutants as $mutant) {
             $idx = strval($mutant->getPredIdx());
             $val = $predictions[$idx];
-            echo("$idx, $val \n");
 
             if($predictions[$idx] == 1) {
                 $filteredMutants[] = $mutant;
