@@ -1,5 +1,6 @@
 # master-project-mutation-testing
 Repository for master project work on efficient mutation testing in Java and PHP, using MuJava, Pitest and Infection.
+
 Thesis by Sara Oonk - Combining Mutation Testing Strategies: Trade-offs Between Duration and Precision
 
 Master branch contains the initial versions of the tools, modified for baseline measurements.
